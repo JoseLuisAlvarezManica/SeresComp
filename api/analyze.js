@@ -17,6 +17,7 @@ export default async function handler(req, res) {
 
   form.parse(req, async (err, fields, files) => {
     if (err) {
+      console.error("Form parse error:", err);
       return res.status(500).json({ error: "Form parse error", detail: err.message });
     }
 
@@ -47,6 +48,7 @@ export default async function handler(req, res) {
 
       return res.status(200).json({ operationLocation: location });
     } catch (e) {
+      console.error("Azure call failed:", e);
       return res.status(500).json({ error: "Azure call failed", detail: e.message });
     }
   });

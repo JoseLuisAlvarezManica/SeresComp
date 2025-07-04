@@ -1,4 +1,3 @@
-// App.jsx
 import { useState } from "react";
 import {
   Card,
@@ -33,8 +32,22 @@ function App() {
         body: formData,
       });
 
-      const { operationLocation } = await res.json();
+      let data;
+      const contentType = res.headers.get("Content-Type") || "";
+      if (contentType.includes("application/json")) {
+        data = await res.json();
+      } else {
+        const text = await res.text();
+        throw new Error(`Non-JSON response: ${text}`);
+      }
 
+      if (!res.ok) {
+        throw new Error(data.error || "Unknown server error");
+      }
+
+      const { operationLocation } = data;
+
+      // Poll Azure for result
       while (true) {
         await new Promise((r) => setTimeout(r, 2000));
         const poll = await fetch(operationLocation, {
@@ -42,17 +55,17 @@ function App() {
             "Ocp-Apim-Subscription-Key": import.meta.env.VITE_FORM_API_KEY,
           },
         });
-        const data = await poll.json();
-        if (data.status === "succeeded") {
-          setResult(data.analyzeResult);
+        const pollData = await poll.json();
+        if (pollData.status === "succeeded") {
+          setResult(pollData.analyzeResult);
           break;
         }
-        if (data.status === "failed") {
+        if (pollData.status === "failed") {
           throw new Error("Analysis failed");
         }
       }
     } catch (err) {
-      console.error("Error:", err);
+      console.error("Upload or analysis error:", err);
       setError("There was a problem analyzing the document.");
     } finally {
       setLoading(false);
@@ -111,4 +124,3 @@ function App() {
 }
 
 export default App;
-
