@@ -1,6 +1,7 @@
-import { IncomingForm } from "formidable";
-import fs from "fs";
-import fetch from "node-fetch";
+
+import { IncomingForm } from 'formidable';
+import fs from 'fs';
+import { promisify } from 'util';
 
 export const config = {
   api: {
@@ -8,48 +9,65 @@ export const config = {
   },
 };
 
+const readFile = promisify(fs.readFile);
+
 export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const form = new IncomingForm({ uploadDir: "/tmp", keepExtensions: true });
+  const form = new IncomingForm({ multiples: false });
+  form.uploadDir = '/tmp';
+  form.keepExtensions = true;
 
   form.parse(req, async (err, fields, files) => {
     if (err) {
-      console.error("Form parse error:", err);
-      return res.status(500).json({ error: "Form parse error", detail: err.message });
+      return res.status(500).json({ error: 'Error parsing the file' });
     }
 
-    const file = Array.isArray(files.file) ? files.file[0] : files.file;
-    if (!file?.filepath) {
-      return res.status(400).json({ error: "No file uploaded" });
-    }
+    const file = files.file;
+    const buffer = await readFile(file.filepath);
 
     try {
-      const buffer = fs.readFileSync(file.filepath);
+      const response = await fetch(`${process.env.FORM_ENDPOINT}/documentModels/${process.env.FORM_MODELID}:analyze?api-version=2024-02-29`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'image/jpeg', // or the right MIME type
+          'Ocp-Apim-Subscription-Key': process.env.FORM_API_KEY,
+        },
+        body: buffer,
+      });
 
-      const azureRes = await fetch(
-        `${process.env.FORM_ENDPOINT}/documentModels/${process.env.FORM_MODELID}:analyze?api-version=2023-07-31-preview`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/octet-stream",
-            "Ocp-Apim-Subscription-Key": process.env.FORM_API_KEY,
-          },
-          body: buffer,
-        }
-      );
-
-      const location = azureRes.headers.get("operation-location");
-      if (!location) {
-        return res.status(500).json({ error: "Missing operation-location in Azure response" });
+      if (!response.ok) {
+        const text = await response.text();
+        return res.status(500).json({ error: `Upload failed: ${text}` });
       }
 
-      return res.status(200).json({ operationLocation: location });
+      const operationLocation = response.headers.get('operation-location');
+      if (!operationLocation) {
+        return res.status(500).json({ error: 'Missing operation-location in Azure response' });
+      }
+
+      // poll the operationLocation until done
+      let result;
+      for (let i = 0; i < 10; i++) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        const poll = await fetch(operationLocation, {
+          headers: {
+            'Ocp-Apim-Subscription-Key': process.env.FORM_API_KEY,
+          },
+        });
+        result = await poll.json();
+        if (result.status === 'succeeded') break;
+      }
+
+      if (result.status !== 'succeeded') {
+        return res.status(500).json({ error: 'Azure Form Recognizer did not finish in time' });
+      }
+
+      return res.status(200).json(result);
     } catch (e) {
-      console.error("Azure call failed:", e);
-      return res.status(500).json({ error: "Azure call failed", detail: e.message });
+      return res.status(500).json({ error: `Unexpected error: ${e.message}` });
     }
   });
 }

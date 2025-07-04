@@ -1,126 +1,60 @@
-import { useState } from "react";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Loader2 } from "lucide-react";
+import { useState } from 'react';
 
-function App() {
+export default function App() {
   const [file, setFile] = useState(null);
+  const [error, setError] = useState(null);
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
 
-  const handleSubmit = async () => {
-    if (!file) return;
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError(null);
+    setResult(null);
+    setLoading(true);
 
     const formData = new FormData();
-    formData.append("file", file);
-
-    setLoading(true);
-    setError("");
-    setResult(null);
+    formData.append('file', file);
 
     try {
-      const res = await fetch("/api/analyze", {
-        method: "POST",
+      const res = await fetch('/api/analyze', {
+        method: 'POST',
         body: formData,
       });
 
-      let data;
-      const contentType = res.headers.get("Content-Type") || "";
-      if (contentType.includes("application/json")) {
-        data = await res.json();
-      } else {
-        const text = await res.text();
-        throw new Error(`Non-JSON response: ${text}`);
-      }
-
-      if (!res.ok) {
-        throw new Error(data.error || "Unknown server error");
-      }
-
-      const { operationLocation } = data;
-
-      // Poll Azure for result
-      while (true) {
-        await new Promise((r) => setTimeout(r, 2000));
-        const poll = await fetch(operationLocation, {
-          headers: {
-            "Ocp-Apim-Subscription-Key": import.meta.env.VITE_FORM_API_KEY,
-          },
-        });
-        const pollData = await poll.json();
-        if (pollData.status === "succeeded") {
-          setResult(pollData.analyzeResult);
-          break;
-        }
-        if (pollData.status === "failed") {
-          throw new Error("Analysis failed");
-        }
-      }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to analyze');
+      setResult(data);
     } catch (err) {
-      console.error("Upload or analysis error:", err);
-      setError("There was a problem analyzing the document.");
+      setError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-      <Card className="w-full max-w-xl shadow-xl rounded-2xl">
-        <CardHeader>
-          <CardTitle className="text-2xl">Upload Document</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="file">Choose a file to analyze</Label>
-            <Input
-              id="file"
-              type="file"
-              accept=".jpg,.png,.pdf"
-              onChange={(e) => setFile(e.target.files[0])}
-            />
-          </div>
-
-          <Button onClick={handleSubmit} disabled={loading || !file}>
-            {loading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Analyzing...
-              </>
-            ) : (
-              "Analyze Document"
-            )}
-          </Button>
-
-          {error && (
-            <p className="text-red-600 text-sm font-medium">{error}</p>
-          )}
-
-          {result && (
-            <div className="mt-6">
-              <h3 className="text-lg font-semibold mb-1">Document Type:</h3>
-              <p className="text-gray-800 mb-3">
-                {result.documents?.[0]?.docType || "Unknown"}
-              </p>
-
-              <h3 className="text-lg font-semibold mb-1">Extracted Fields:</h3>
-              <pre className="bg-gray-50 border rounded-md p-3 text-sm overflow-x-auto">
-                {JSON.stringify(result.documents?.[0]?.fields, null, 2)}
-              </pre>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-6">
+      <form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow-md w-full max-w-md">
+        <h1 className="text-xl font-bold mb-4">Upload Document</h1>
+        <input
+          type="file"
+          accept="image/*,application/pdf"
+          onChange={(e) => setFile(e.target.files[0])}
+          className="mb-4 w-full border border-gray-300 p-2 rounded"
+        />
+        <button
+          type="submit"
+          disabled={!file || loading}
+          className="bg-black text-white px-4 py-2 rounded disabled:opacity-50"
+        >
+          {loading ? 'Analyzing...' : 'Analyze Document'}
+        </button>
+        {error && <p className="text-red-600 mt-2">{error}</p>}
+        {result && (
+          <pre className="mt-4 bg-gray-100 p-4 text-xs overflow-auto max-h-60">
+            {JSON.stringify(result, null, 2)}
+          </pre>
+        )}
+      </form>
     </div>
   );
 }
-
-export default App;
