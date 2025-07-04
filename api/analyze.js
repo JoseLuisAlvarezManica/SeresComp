@@ -1,4 +1,3 @@
-
 import { IncomingForm } from 'formidable';
 import fs from 'fs';
 import { promisify } from 'util';
@@ -16,58 +15,58 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const form = new IncomingForm({ multiples: false });
-  form.uploadDir = '/tmp';
-  form.keepExtensions = true;
+  const form = new IncomingForm({ multiples: false, uploadDir: '/tmp', keepExtensions: true });
 
   form.parse(req, async (err, fields, files) => {
     if (err) {
-      return res.status(500).json({ error: 'Error parsing the file' });
+      return res.status(500).json({ error: 'Error parsing file', detail: err.message });
     }
 
     const file = files.file;
-    const buffer = await readFile(file.filepath);
+    if (!file?.filepath) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
 
     try {
-      const response = await fetch(`${process.env.FORM_ENDPOINT}/documentModels/${process.env.FORM_MODELID}:analyze?api-version=2024-02-29`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'image/jpeg', // or the right MIME type
-          'Ocp-Apim-Subscription-Key': process.env.FORM_API_KEY,
-        },
-        body: buffer,
-      });
+      const buffer = await readFile(file.filepath);
 
-      if (!response.ok) {
-        const text = await response.text();
-        return res.status(500).json({ error: `Upload failed: ${text}` });
-      }
-
-      const operationLocation = response.headers.get('operation-location');
-      if (!operationLocation) {
-        return res.status(500).json({ error: 'Missing operation-location in Azure response' });
-      }
-
-      // poll the operationLocation until done
-      let result;
-      for (let i = 0; i < 10; i++) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        const poll = await fetch(operationLocation, {
+      const azureRes = await fetch(
+        `${process.env.FORM_ENDPOINT}/documentModels/${process.env.FORM_MODELID}:analyze?api-version=2023-07-31-preview`,
+        {
+          method: 'POST',
           headers: {
+            'Content-Type': 'application/octet-stream',
             'Ocp-Apim-Subscription-Key': process.env.FORM_API_KEY,
           },
+          body: buffer,
+        }
+      );
+
+      const location = azureRes.headers.get('operation-location');
+      if (!location) {
+        const errorText = await azureRes.text();
+        return res.status(500).json({ error: 'Missing operation-location', body: errorText });
+      }
+
+      // Poll until analysis completes
+      for (let i = 0; i < 10; i++) {
+        await new Promise(r => setTimeout(r, 2000));
+
+        const pollRes = await fetch(location, {
+          headers: { 'Ocp-Apim-Subscription-Key': process.env.FORM_API_KEY },
         });
-        result = await poll.json();
-        if (result.status === 'succeeded') break;
+        const pollData = await pollRes.json();
+
+        if (pollData.status === 'succeeded') {
+          return res.status(200).json(pollData);
+        } else if (pollData.status === 'failed') {
+          return res.status(500).json({ error: 'Azure analysis failed', details: pollData });
+        }
       }
 
-      if (result.status !== 'succeeded') {
-        return res.status(500).json({ error: 'Azure Form Recognizer did not finish in time' });
-      }
-
-      return res.status(200).json(result);
+      return res.status(500).json({ error: 'Timed out waiting for result' });
     } catch (e) {
-      return res.status(500).json({ error: `Unexpected error: ${e.message}` });
+      return res.status(500).json({ error: e.message || 'Unexpected server error' });
     }
   });
 }
