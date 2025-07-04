@@ -8,10 +8,10 @@ import {
   doc,
   query,
   where,
-  orderBy
+  orderBy,
+  serverTimestamp
 } from 'firebase/firestore';
 import { db } from './firebaseConfig';
-
 
 export const getAllDocuments = async () => {
   try {
@@ -37,16 +37,15 @@ export const getAllDocuments = async () => {
   }
 };
 
-
 export const getDocumentByFolio = async (folio) => {
   try {
-    console.log(`Fetching prints for userUID: ${folio}`);
-    const printsCollection = collection(db, 'Prints');
+    console.log(`Fetching prints for folio: ${folio}`);
+    const printsCollection = collection(db, 'Facturas'); 
     const q = query(printsCollection, where('Folio fiscal', '==', folio));
     const snapshot = await getDocs(q);
 
     if (snapshot.empty) {
-      console.log(`No prints found for folio: ${userUID}`);
+      console.log(`No prints found for folio: ${folio}`); 
       return [];
     }
 
@@ -57,28 +56,33 @@ export const getDocumentByFolio = async (folio) => {
     console.log(`Fetched ${userFolio.length} documents for folio ${folio}`);
     return userFolio;
   } catch (error) {
-    console.error('Error fetching prints by userUID:', error);
+    console.error('Error fetching prints by folio:', error);
     return [];
   }
 };
 
 export const createDocument = async (documentData) => {
-
   try {
     console.log('Creating a new document:', documentData);
+    
+    const dataWithTimestamp = {
+      ...documentData,
+      created_at: serverTimestamp()
+    };
+    
     const DocumentCollection = collection(db, 'Facturas');
-    const docRef = await addDoc(DocumentCollection, DocumentData);
-    console.log('New print created with ID:', docRef.id);
+    const docRef = await addDoc(DocumentCollection, dataWithTimestamp);
+    console.log('New document created with ID:', docRef.id);
     return docRef.id;
   } catch (error) {
-    console.error('Error creating new print:', error);
+    console.error('Error creating new document:', error);
     throw error;
   }
 };
 
 export const updateDocument = async (folio, updatedData) => {
   try {
-    console.log(`Updating print ${folio} with:`, updatedData);
+    console.log(`Updating document ${folio} with:`, updatedData);
     const folioRef = doc(db, 'Facturas', folio);
 
     const printDoc = await getDoc(folioRef);
@@ -87,8 +91,13 @@ export const updateDocument = async (folio, updatedData) => {
       return;
     }
 
-    await updateDoc(folioRef, updatedData);
-    console.log(`Print ${folio} updated successfully.`);
+    const dataWithTimestamp = {
+      ...updatedData,
+      updated_at: serverTimestamp()
+    };
+
+    await updateDoc(folioRef, dataWithTimestamp);
+    console.log(`Document ${folio} updated successfully.`);
   } catch (error) {
     console.error(`Error updating document ${folio}:`, error);
   }
@@ -101,6 +110,6 @@ export const deleteDocument = async (folio) => {
     await deleteDoc(documentRef);
     console.log('Document deleted:', folio);
   } catch (error) {
-    console.error('Error deleting print:', error);
+    console.error('Error deleting document:', error);
   }
 };
