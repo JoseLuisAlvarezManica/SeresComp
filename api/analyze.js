@@ -1,11 +1,10 @@
-//(Vercel Serverless Function)
-import formidable from "formidable";
+import { IncomingForm } from "formidable";
 import fs from "fs";
 import fetch from "node-fetch";
 
 export const config = {
   api: {
-    bodyParser: false, 
+    bodyParser: false,
   },
 };
 
@@ -14,15 +13,15 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const form = new formidable.IncomingForm({ uploadDir: "/tmp", keepExtensions: true });
+  const form = new IncomingForm({ uploadDir: "/tmp", keepExtensions: true });
 
   form.parse(req, async (err, fields, files) => {
     if (err) {
-      return res.status(500).json({ error: "Error parsing form data" });
+      return res.status(500).json({ error: "Form parse error", detail: err.message });
     }
 
     const file = Array.isArray(files.file) ? files.file[0] : files.file;
-    if (!file || !file.filepath) {
+    if (!file?.filepath) {
       return res.status(400).json({ error: "No file uploaded" });
     }
 
@@ -41,15 +40,14 @@ export default async function handler(req, res) {
         }
       );
 
-      const operationLocation = azureRes.headers.get("operation-location");
-
-      if (!operationLocation) {
-        return res.status(500).json({ error: "No operation-location returned from Azure" });
+      const location = azureRes.headers.get("operation-location");
+      if (!location) {
+        return res.status(500).json({ error: "Missing operation-location" });
       }
 
-      return res.status(200).json({ operationLocation });
+      return res.status(200).json({ operationLocation: location });
     } catch (e) {
-      return res.status(500).json({ error: "Failed to analyze document", detail: e.message });
+      return res.status(500).json({ error: "Azure call failed", detail: e.message });
     }
   });
 }
