@@ -50,7 +50,7 @@ export default function App() {
     const selectedFile = e.target.files[0];
     if (selectedFile) {
       if (selectedFile.size > 4 * 1024 * 1024) {
-        setError('File size must be less than 50MB');
+        setError('File size must be less than 4MB');
         return;
       }
       
@@ -65,9 +65,41 @@ export default function App() {
     }
   };
 
+  const renderFieldValue = (value) => {
+    if (value === null || value === undefined) {
+      return 'N/A';
+    }
+    
+    if (typeof value === 'string' || typeof value === 'number') {
+      return value;
+    }
+    
+    if (Array.isArray(value)) {
+      return (
+        <div className="space-y-1">
+          {value.map((item, index) => (
+            <div key={index} className="text-sm bg-gray-100 p-2 rounded">
+              {typeof item === 'object' ? JSON.stringify(item) : item}
+            </div>
+          ))}
+        </div>
+      );
+    }
+    
+    if (typeof value === 'object') {
+      return (
+        <div className="text-sm bg-gray-100 p-2 rounded max-h-20 overflow-y-auto">
+          <pre>{JSON.stringify(value, null, 2)}</pre>
+        </div>
+      );
+    }
+    
+    return String(value);
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 p-6">
-      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-2xl">
+      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-4xl">
         <h1 className="text-2xl font-bold mb-6 text-center">Document Analysis</h1>
         
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -118,20 +150,27 @@ export default function App() {
             {result.labels && Object.keys(result.labels).length > 0 && (
               <div className="bg-white border rounded-lg p-4">
                 <h3 className="font-medium text-gray-900 mb-3">
-                  Labels ({Object.keys(result.labels).length})
+                  Extracted Fields ({Object.keys(result.labels).length})
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-4">
                   {Object.entries(result.labels).map(([key, label]) => (
-                    <div key={key} className="p-3 bg-gray-50 rounded">
-                      <div className="font-medium text-sm text-gray-700">{key}</div>
-                      <div className="text-gray-900 mt-1">
-                        {label.value || 'N/A'}
+                    <div key={key} className="p-4 bg-gray-50 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="font-medium text-sm text-gray-700">{key}</span>
+                        {label.type && (
+                          <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                            {label.type}
+                          </span>
+                        )}
+                        {label.confidence && (
+                          <span className="text-xs text-gray-500">
+                            {(label.confidence * 100).toFixed(1)}%
+                          </span>
+                        )}
                       </div>
-                      {label.confidence && (
-                        <div className="text-xs text-gray-500 mt-1">
-                          {(label.confidence * 100).toFixed(1)}% confidence
-                        </div>
-                      )}
+                      <div className="text-gray-900">
+                        {renderFieldValue(label.value)}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -145,9 +184,14 @@ export default function App() {
                 </h3>
                 {result.tables.map((table, tableIndex) => (
                   <div key={tableIndex} className="mb-6 last:mb-0">
-                    <h4 className="font-medium text-sm text-gray-700 mb-2">
-                      Table {tableIndex + 1} ({table.rows} rows × {table.columns} columns)
-                    </h4>
+                    <div className="flex items-center gap-2 mb-3">
+                      <h4 className="font-medium text-sm text-gray-700">
+                        Table {tableIndex + 1} ({table.rows} rows × {table.columns} columns)
+                      </h4>
+                      {table.caption && (
+                        <span className="text-xs text-gray-500">- {table.caption}</span>
+                      )}
+                    </div>
                     <div className="overflow-x-auto">
                       <table className="min-w-full border border-gray-200 text-sm">
                         <tbody>
@@ -168,6 +212,18 @@ export default function App() {
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {/* Special handling for TabladeCompra if it contains data */}
+            {result.labels && result.labels.TabladeCompra && result.labels.TabladeCompra.value && (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <h3 className="font-medium text-green-900 mb-3">
+                  Tabla de Compra (Purchase Table)
+                </h3>
+                <div className="text-green-800">
+                  {renderFieldValue(result.labels.TabladeCompra.value)}
+                </div>
               </div>
             )}
 
