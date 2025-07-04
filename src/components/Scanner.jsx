@@ -1,4 +1,5 @@
 import React from 'react';
+import { useState } from 'react';
 import {createDocument} from '../services/documentManager';
 
 export const Scanner = () => {
