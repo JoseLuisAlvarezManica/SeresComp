@@ -5,6 +5,7 @@ export default function App() {
   const [error, setError] = useState(null);
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [editableData, setEditableData] = useState({});
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -38,12 +39,53 @@ export default function App() {
       }
       
       setResult(data);
+      // Initialize editable data
+      initializeEditableData(data);
     } catch (err) {
       console.error('Error:', err);
       setError(err.message);
     } finally {
       setLoading(false);
     }
+  };
+
+  const initializeEditableData = (data) => {
+    const editable = {};
+    
+    if (data.labels) {
+      Object.entries(data.labels).forEach(([key, label]) => {
+        if (key !== 'TabladeCompra') {
+          editable[key] = typeof label.value === 'string' || typeof label.value === 'number' 
+            ? String(label.value || '') 
+            : '';
+        }
+      });
+    }
+    
+    // Initialize table data for TabladeCompra
+    if (data.tables && data.tables.length > 0) {
+      editable.TabladeCompra = data.tables[0].data.map(row => [...row]);
+    }
+    
+    setEditableData(editable);
+  };
+
+  const handleFieldChange = (fieldName, value) => {
+    setEditableData(prev => ({
+      ...prev,
+      [fieldName]: value
+    }));
+  };
+
+  const handleTableCellChange = (rowIndex, colIndex, value) => {
+    setEditableData(prev => ({
+      ...prev,
+      TabladeCompra: prev.TabladeCompra.map((row, rIdx) => 
+        rIdx === rowIndex 
+          ? row.map((cell, cIdx) => cIdx === colIndex ? value : cell)
+          : row
+      )
+    }));
   };
 
   const handleFileChange = (e) => {
@@ -65,36 +107,89 @@ export default function App() {
     }
   };
 
-  const renderFieldValue = (value) => {
-    if (value === null || value === undefined) {
-      return 'N/A';
-    }
+  const getConfidenceColor = (confidence) => {
+    if (!confidence) return 'text-gray-900';
+    return confidence < 0.5 ? 'text-red-600' : 'text-gray-900';
+  };
+
+  const renderEditableField = (fieldName, label) => {
+    const confidence = label.confidence || 0;
+    const textColor = getConfidenceColor(confidence);
     
-    if (typeof value === 'string' || typeof value === 'number') {
-      return value;
-    }
-    
-    if (Array.isArray(value)) {
-      return (
-        <div className="space-y-1">
-          {value.map((item, index) => (
-            <div key={index} className="text-sm bg-gray-100 p-2 rounded">
-              {typeof item === 'object' ? JSON.stringify(item) : item}
-            </div>
-          ))}
+    return (
+      <div key={fieldName} className="p-4 bg-gray-50 rounded-lg">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="font-medium text-sm text-gray-700">{fieldName}</span>
+          {label.type && (
+            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+              {label.type}
+            </span>
+          )}
+          {confidence > 0 && (
+            <span className={`text-xs ${confidence < 0.5 ? 'text-red-600' : 'text-gray-500'}`}>
+              {(confidence * 100).toFixed(1)}%
+            </span>
+          )}
         </div>
-      );
+        <input
+          type="text"
+          value={editableData[fieldName] || ''}
+          onChange={(e) => handleFieldChange(fieldName, e.target.value)}
+          className={`w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${textColor}`}
+          placeholder={`Enter ${fieldName}`}
+        />
+      </div>
+    );
+  };
+
+  const renderTabladeCompra = () => {
+    if (!editableData.TabladeCompra || !Array.isArray(editableData.TabladeCompra)) {
+      return null;
     }
+
+    const tableData = editableData.TabladeCompra;
+    const confidence = result.labels?.TabladeCompra?.confidence || 0;
     
-    if (typeof value === 'object') {
-      return (
-        <div className="text-sm bg-gray-100 p-2 rounded max-h-20 overflow-y-auto">
-          <pre>{JSON.stringify(value, null, 2)}</pre>
+    return (
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <h3 className="font-medium text-blue-900">
+            Tabla de Compra (Purchase Table)
+          </h3>
+          {confidence > 0 && (
+            <span className={`text-xs ${confidence < 0.5 ? 'text-red-600' : 'text-gray-500'}`}>
+              {(confidence * 100).toFixed(1)}%
+            </span>
+          )}
         </div>
-      );
-    }
-    
-    return String(value);
+        <div className="overflow-x-auto">
+          <table className="min-w-full border border-gray-300">
+            <tbody>
+              {tableData.map((row, rowIndex) => (
+                <tr key={rowIndex} className={`border-b border-gray-300 ${rowIndex === 0 ? 'bg-gray-100' : 'bg-white'}`}>
+                  {row.map((cell, colIndex) => (
+                    <td key={colIndex} className="border-r border-gray-300 last:border-r-0 p-1">
+                      {rowIndex === 0 ? (
+                        <div className="font-medium text-sm text-gray-700 p-2">
+                          {cell}
+                        </div>
+                      ) : (
+                        <input
+                          type="text"
+                          value={cell}
+                          onChange={(e) => handleTableCellChange(rowIndex, colIndex, e.target.value)}
+                          className={`w-full p-2 border-none bg-transparent focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm ${getConfidenceColor(confidence)}`}
+                        />
+                      )}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -142,99 +237,62 @@ export default function App() {
               <h2 className="text-lg font-semibold">Document Analysis</h2>
               {result.confidence && (
                 <span className="text-sm text-gray-600">
-                  Confidence: {(result.confidence * 100).toFixed(1)}%
+                  Overall Confidence: {(result.confidence * 100).toFixed(1)}%
                 </span>
               )}
             </div>
 
+            {/* Render TabladeCompra as formatted table */}
+            {renderTabladeCompra()}
+
+            {/* Render other fields as editable inputs */}
             {result.labels && Object.keys(result.labels).length > 0 && (
               <div className="bg-white border rounded-lg p-4">
                 <h3 className="font-medium text-gray-900 mb-3">
-                  Extracted Fields ({Object.keys(result.labels).length})
+                  Extracted Fields ({Object.keys(result.labels).filter(key => key !== 'TabladeCompra').length})
                 </h3>
                 <div className="grid grid-cols-1 gap-4">
-                  {Object.entries(result.labels).map(([key, label]) => (
-                    <div key={key} className="p-4 bg-gray-50 rounded-lg">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="font-medium text-sm text-gray-700">{key}</span>
-                        {label.type && (
-                          <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                            {label.type}
-                          </span>
-                        )}
-                        {label.confidence && (
-                          <span className="text-xs text-gray-500">
-                            {(label.confidence * 100).toFixed(1)}%
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-gray-900">
-                        {renderFieldValue(label.value)}
-                      </div>
-                    </div>
-                  ))}
+                  {Object.entries(result.labels)
+                    .filter(([key]) => key !== 'TabladeCompra')
+                    .map(([key, label]) => renderEditableField(key, label))}
                 </div>
               </div>
             )}
 
-            {result.tables && result.tables.length > 0 && (
-              <div className="bg-white border rounded-lg p-4">
-                <h3 className="font-medium text-gray-900 mb-3">
-                  Tables ({result.tables.length})
-                </h3>
-                {result.tables.map((table, tableIndex) => (
-                  <div key={tableIndex} className="mb-6 last:mb-0">
-                    <div className="flex items-center gap-2 mb-3">
-                      <h4 className="font-medium text-sm text-gray-700">
-                        Table {tableIndex + 1} ({table.rows} rows × {table.columns} columns)
-                      </h4>
-                      {table.caption && (
-                        <span className="text-xs text-gray-500">- {table.caption}</span>
-                      )}
-                    </div>
-                    <div className="overflow-x-auto">
-                      <table className="min-w-full border border-gray-200 text-sm">
-                        <tbody>
-                          {table.data.map((row, rowIndex) => (
-                            <tr key={rowIndex} className={`border-b border-gray-200 ${rowIndex === 0 ? 'bg-gray-50 font-medium' : ''}`}>
-                              {row.map((cell, colIndex) => (
-                                <td 
-                                  key={colIndex} 
-                                  className="px-3 py-2 border-r border-gray-200 last:border-r-0"
-                                >
-                                  {cell || ''}
-                                </td>
-                              ))}
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Special handling for TabladeCompra if it contains data */}
-            {result.labels && result.labels.TabladeCompra && result.labels.TabladeCompra.value && (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <h3 className="font-medium text-green-900 mb-3">
-                  Tabla de Compra (Purchase Table)
-                </h3>
-                <div className="text-green-800">
-                  {renderFieldValue(result.labels.TabladeCompra.value)}
-                </div>
-              </div>
-            )}
-
-            {(!result.labels || Object.keys(result.labels).length === 0) && 
-             (!result.tables || result.tables.length === 0) && (
+            {(!result.labels || Object.keys(result.labels).length === 0) && (
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                 <p className="text-yellow-800">
-                  No labels or tables were extracted from this document.
+                  No fields were extracted from this document.
                 </p>
               </div>
             )}
+
+            {/* Save/Export buttons */}
+            <div className="flex gap-4">
+              <button
+                onClick={() => {
+                  console.log('Current editable data:', editableData);
+                  alert('Data logged to console');
+                }}
+                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+              >
+                Save Changes
+              </button>
+              <button
+                onClick={() => {
+                  const dataStr = JSON.stringify(editableData, null, 2);
+                  const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                  const url = URL.createObjectURL(dataBlob);
+                  const link = document.createElement('a');
+                  link.href = url;
+                  link.download = 'extracted_data.json';
+                  link.click();
+                }}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              >
+                Export Data
+              </button>
+            </div>
 
             <details className="bg-gray-50 rounded-lg p-4">
               <summary className="cursor-pointer font-medium text-gray-700">
