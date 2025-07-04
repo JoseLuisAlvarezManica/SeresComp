@@ -78,7 +78,6 @@ export const createDocument = async (documentData) => {
     // Add timestamp to the document
     const dataWithTimestamp = {
       ...processedData,
-      start_time: serverTimestamp(),
       created_at: serverTimestamp()
     };
     
