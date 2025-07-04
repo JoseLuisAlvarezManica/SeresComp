@@ -40,12 +40,12 @@ export const getAllDocuments = async () => {
 export const getDocumentByFolio = async (folio) => {
   try {
     console.log(`Fetching prints for folio: ${folio}`);
-    const printsCollection = collection(db, 'Facturas'); 
+    const printsCollection = collection(db, 'Facturas');
     const q = query(printsCollection, where('Folio fiscal', '==', folio));
     const snapshot = await getDocs(q);
 
     if (snapshot.empty) {
-      console.log(`No prints found for folio: ${folio}`); 
+      console.log(`No prints found for folio: ${folio}`);
       return [];
     }
 
@@ -65,8 +65,20 @@ export const createDocument = async (documentData) => {
   try {
     console.log('Creating a new document:', documentData);
     
+    // Convert nested arrays to a format Firestore can handle
+    const processedData = { ...documentData };
+    
+    // Handle TabladeCompra nested array - Option 1: Convert to JSON string
+    if (processedData.TabladeCompra && Array.isArray(processedData.TabladeCompra)) {
+      // Store as JSON string to preserve exact structure
+      processedData.TabladeCompra_json = JSON.stringify(processedData.TabladeCompra);
+      delete processedData.TabladeCompra; // Remove the nested array
+    }
+    
+    // Add timestamp to the document
     const dataWithTimestamp = {
-      ...documentData,
+      ...processedData,
+      start_time: serverTimestamp(),
       created_at: serverTimestamp()
     };
     
@@ -91,8 +103,15 @@ export const updateDocument = async (folio, updatedData) => {
       return;
     }
 
+    // Handle nested arrays in update data too
+    const processedData = { ...updatedData };
+    if (processedData.TabladeCompra && Array.isArray(processedData.TabladeCompra)) {
+      processedData.TabladeCompra_json = JSON.stringify(processedData.TabladeCompra);
+      delete processedData.TabladeCompra;
+    }
+
     const dataWithTimestamp = {
-      ...updatedData,
+      ...processedData,
       updated_at: serverTimestamp()
     };
 
