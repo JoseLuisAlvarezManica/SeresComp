@@ -1,178 +1,196 @@
-import { IncomingForm } from 'formidable';
-import fs from 'fs';
-import { promisify } from 'util';
+import { useState } from 'react';
 
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
+export default function App() {
+  const [file, setFile] = useState(null);
+  const [error, setError] = useState(null);
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-const readFile = promisify(fs.readFile);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError(null);
+    setResult(null);
+    setLoading(true);
 
-export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
-  const form = new IncomingForm({ 
-    multiples: false, 
-    uploadDir: '/tmp', 
-    keepExtensions: true,
-    maxFileSize: 50 * 1024 * 1024
-  });
-
-  form.parse(req, async (err, fields, files) => {
-    if (err) {
-      console.error('Form parsing error:', err);
-      return res.status(500).json({ error: 'Error parsing file', detail: err.message });
+    if (!file) {
+      setError('Please select a file first');
+      setLoading(false);
+      return;
     }
 
-    const file = Array.isArray(files.file) ? files.file[0] : files.file;
-    
-    if (!file?.filepath) {
-      return res.status(400).json({ error: 'No file uploaded' });
-    }
+    const formData = new FormData();
+    formData.append('file', file);
 
     try {
-      const buffer = await readFile(file.filepath);
-      console.log('File read successfully, size:', buffer.length);
-
-      // Check environment variables
-      const endpoint = process.env.FORM_ENDPOINT;
-      const modelId = process.env.FORM_MODELID;
-      const apiKey = process.env.FORM_API_KEY;
-
-      console.log('Environment check:');
-      console.log('- FORM_ENDPOINT:', endpoint ? 'SET' : 'MISSING');
-      console.log('- FORM_MODELID:', modelId ? 'SET' : 'MISSING');
-      console.log('- FORM_API_KEY:', apiKey ? 'SET (length: ' + apiKey.length + ')' : 'MISSING');
-
-      if (!endpoint || !modelId || !apiKey) {
-        return res.status(500).json({ 
-          error: 'Missing required environment variables',
-          details: {
-            endpoint: !!endpoint,
-            modelId: !!modelId,
-            apiKey: !!apiKey
-          }
-        });
-      }
-
-      // Try different endpoint patterns
-      const baseEndpoint = endpoint.replace(/\/$/, '');
-      const endpointVariations = [
-        `${baseEndpoint}/formrecognizer/documentModels/${modelId}:analyze?api-version=2023-07-31`,
-        `${baseEndpoint}/documentModels/${modelId}:analyze?api-version=2023-07-31`,
-        `${baseEndpoint}/formrecognizer/documentModels/${modelId}:analyze?api-version=2022-08-31`,
-        `${baseEndpoint}/documentModels/${modelId}:analyze?api-version=2022-08-31`
-      ];
-
-      console.log('Trying endpoint variations:');
+      console.log('Uploading file:', file.name, 'Size:', file.size);
       
-      for (let i = 0; i < endpointVariations.length; i++) {
-        const testEndpoint = endpointVariations[i];
-        console.log(`Attempt ${i + 1}: ${testEndpoint}`);
-
-        try {
-          const azureRes = await fetch(testEndpoint, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/octet-stream',
-              'Ocp-Apim-Subscription-Key': apiKey,
-            },
-            body: buffer,
-          });
-
-          console.log(`Response status: ${azureRes.status}`);
-
-          if (azureRes.status === 202) {
-            // Success! Get the operation location
-            const location = azureRes.headers.get('operation-location');
-            if (!location) {
-              return res.status(500).json({ error: 'Missing operation-location header' });
-            }
-
-            console.log('Success! Polling location:', location);
-
-            // Poll for results
-            for (let j = 0; j < 30; j++) {
-              await new Promise(r => setTimeout(r, 2000));
-
-              const pollRes = await fetch(location, {
-                headers: { 'Ocp-Apim-Subscription-Key': apiKey },
-              });
-
-              if (!pollRes.ok) {
-                const errorText = await pollRes.text();
-                console.error('Polling error:', errorText);
-                return res.status(pollRes.status).json({ 
-                  error: 'Polling failed', 
-                  status: pollRes.status,
-                  body: errorText 
-                });
-              }
-
-              const pollData = await pollRes.json();
-              console.log('Poll attempt', j + 1, 'Status:', pollData.status);
-
-              if (pollData.status === 'succeeded') {
-                // Clean up temp file
-                try {
-                  fs.unlinkSync(file.filepath);
-                } catch (unlinkErr) {
-                  console.warn('Could not delete temp file:', unlinkErr.message);
-                }
-                
-                return res.status(200).json({
-                  success: true,
-                  workingEndpoint: testEndpoint,
-                  result: pollData
-                });
-              } else if (pollData.status === 'failed') {
-                return res.status(500).json({ 
-                  error: 'Azure analysis failed', 
-                  details: pollData 
-                });
-              }
-            }
-
-            return res.status(500).json({ error: 'Timed out waiting for result' });
-          
-          } else if (azureRes.status === 404) {
-            const errorText = await azureRes.text();
-            console.log(`404 error with endpoint ${i + 1}:`, errorText);
-            
-            // Continue to next endpoint variation
-            continue;
-          } else {
-            const errorText = await azureRes.text();
-            console.error(`Error with endpoint ${i + 1}:`, errorText);
-            
-            // For non-404 errors, return immediately
-            return res.status(azureRes.status).json({ 
-              error: 'Azure API error', 
-              status: azureRes.status,
-              body: errorText,
-              endpoint: testEndpoint
-            });
-          }
-        } catch (fetchError) {
-          console.error(`Fetch error with endpoint ${i + 1}:`, fetchError.message);
-          continue;
-        }
-      }
-
-      // If we get here, all endpoints failed
-      return res.status(404).json({ 
-        error: 'All endpoint variations failed with 404',
-        tried: endpointVariations,
-        suggestion: 'Please check your model ID and endpoint configuration'
+      const res = await fetch('/api/analyze', {
+        method: 'POST',
+        body: formData,
       });
 
-    } catch (e) {
-      console.error('Unexpected error:', e);
-      return res.status(500).json({ error: e.message || 'Unexpected server error' });
+      const data = await res.json();
+      console.log('Response status:', res.status);
+      console.log('Response data:', data);
+      
+      if (!res.ok) {
+        throw new Error(data.error || `HTTP ${res.status}: ${res.statusText}`);
+      }
+      
+      setResult(data);
+    } catch (err) {
+      console.error('Error:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
-  });
+  };
+
+  const handleFileChange = (e) => {
+    const selectedFile = e.target.files[0];
+    if (selectedFile) {
+      if (selectedFile.size > 4 * 1024 * 1024) {
+        setError('File size must be less than 4MB');
+        return;
+      }
+      
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/bmp', 'image/tiff', 'application/pdf'];
+      if (!allowedTypes.includes(selectedFile.type)) {
+        setError('Please select a valid image file (JPEG, PNG, GIF, BMP, TIFF) or PDF');
+        return;
+      }
+      
+      setFile(selectedFile);
+      setError(null);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-6">
+      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-2xl">
+        <h1 className="text-2xl font-bold mb-6 text-center">Document Analysis</h1>
+        
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Upload Document
+            </label>
+            <input
+              type="file"
+              accept="image/*,application/pdf"
+              onChange={handleFileChange}
+              className="w-full border border-gray-300 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            {file && (
+              <p className="text-sm text-gray-600 mt-2">
+                Selected: {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
+              </p>
+            )}
+          </div>
+          
+          <button
+            type="submit"
+            disabled={!file || loading}
+            className="w-full bg-blue-600 text-white px-4 py-3 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {loading ? 'Analyzing Document...' : 'Analyze Document'}
+          </button>
+        </form>
+
+        {error && (
+          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-md">
+            <p className="text-red-600 font-medium">Error:</p>
+            <p className="text-red-600">{error}</p>
+          </div>
+        )}
+
+        {result && (
+          <div className="mt-6 space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Document Analysis</h2>
+              {result.confidence && (
+                <span className="text-sm text-gray-600">
+                  Confidence: {(result.confidence * 100).toFixed(1)}%
+                </span>
+              )}
+            </div>
+
+            {result.labels && Object.keys(result.labels).length > 0 && (
+              <div className="bg-white border rounded-lg p-4">
+                <h3 className="font-medium text-gray-900 mb-3">
+                  Labels ({Object.keys(result.labels).length})
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {Object.entries(result.labels).map(([key, label]) => (
+                    <div key={key} className="p-3 bg-gray-50 rounded">
+                      <div className="font-medium text-sm text-gray-700">{key}</div>
+                      <div className="text-gray-900 mt-1">
+                        {label.value || 'N/A'}
+                      </div>
+                      {label.confidence && (
+                        <div className="text-xs text-gray-500 mt-1">
+                          {(label.confidence * 100).toFixed(1)}% confidence
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {result.tables && result.tables.length > 0 && (
+              <div className="bg-white border rounded-lg p-4">
+                <h3 className="font-medium text-gray-900 mb-3">
+                  Tables ({result.tables.length})
+                </h3>
+                {result.tables.map((table, tableIndex) => (
+                  <div key={tableIndex} className="mb-6 last:mb-0">
+                    <h4 className="font-medium text-sm text-gray-700 mb-2">
+                      Table {tableIndex + 1} ({table.rows} rows × {table.columns} columns)
+                    </h4>
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full border border-gray-200 text-sm">
+                        <tbody>
+                          {table.data.map((row, rowIndex) => (
+                            <tr key={rowIndex} className={`border-b border-gray-200 ${rowIndex === 0 ? 'bg-gray-50 font-medium' : ''}`}>
+                              {row.map((cell, colIndex) => (
+                                <td 
+                                  key={colIndex} 
+                                  className="px-3 py-2 border-r border-gray-200 last:border-r-0"
+                                >
+                                  {cell || ''}
+                                </td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {(!result.labels || Object.keys(result.labels).length === 0) && 
+             (!result.tables || result.tables.length === 0) && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <p className="text-yellow-800">
+                  No labels or tables were extracted from this document.
+                </p>
+              </div>
+            )}
+
+            <details className="bg-gray-50 rounded-lg p-4">
+              <summary className="cursor-pointer font-medium text-gray-700">
+                Raw Response (for debugging)
+              </summary>
+              <pre className="mt-3 text-xs overflow-auto max-h-60 bg-white p-3 rounded border">
+                {JSON.stringify(result, null, 2)}
+              </pre>
+            </details>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
