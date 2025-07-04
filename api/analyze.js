@@ -42,7 +42,7 @@ export default async function handler(req, res) {
 
       const location = azureRes.headers.get("operation-location");
       if (!location) {
-        return res.status(500).json({ error: "Missing operation-location" });
+        return res.status(500).json({ error: "Missing operation-location in Azure response" });
       }
 
       return res.status(200).json({ operationLocation: location });
