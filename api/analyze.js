@@ -112,9 +112,44 @@ export default async function handler(req, res) {
             
             if (document?.fields) {
               Object.entries(document.fields).forEach(([key, field]) => {
+                let value = null;
+                
+
+                if (field.type === 'string') {
+                  value = field.value || field.content || null;
+                } else if (field.type === 'number') {
+                  value = field.value;
+                } else if (field.type === 'date') {
+                  value = field.value;
+                } else if (field.type === 'array') {
+                  if (field.valueArray && field.valueArray.length > 0) {
+                    value = field.valueArray.map(item => {
+                      if (item.valueObject) {
+                        const obj = {};
+                        Object.entries(item.valueObject).forEach(([subKey, subField]) => {
+                          obj[subKey] = subField.value || subField.content || null;
+                        });
+                        return obj;
+                      }
+                      return item.value || item.content || null;
+                    });
+                  }
+                } else if (field.type === 'object') {
+                  if (field.valueObject) {
+                    const obj = {};
+                    Object.entries(field.valueObject).forEach(([subKey, subField]) => {
+                      obj[subKey] = subField.value || subField.content || null;
+                    });
+                    value = obj;
+                  }
+                } else {
+                  value = field.value || field.content || null;
+                }
+                
                 labels[key] = {
-                  value: field.content || field.value || null,
-                  confidence: field.confidence || null
+                  value: value,
+                  confidence: field.confidence || null,
+                  type: field.type || null
                 };
               });
             }
@@ -124,18 +159,19 @@ export default async function handler(req, res) {
                 const cleanTable = {
                   rows: table.rowCount,
                   columns: table.columnCount,
-                  data: []
+                  data: [],
+                  caption: table.caption || null
                 };
                 
                 for (let r = 0; r < table.rowCount; r++) {
-                  cleanTable.data[r] = [];
-                  for (let c = 0; c < table.columnCount; c++) {
-                    const cell = table.cells.find(
-                      cell => cell.rowIndex === r && cell.columnIndex === c
-                    );
-                    cleanTable.data[r][c] = cell ? cell.content : '';
-                  }
+                  cleanTable.data[r] = new Array(table.columnCount).fill('');
                 }
+                
+                table.cells.forEach(cell => {
+                  if (cell.rowIndex < table.rowCount && cell.columnIndex < table.columnCount) {
+                    cleanTable.data[cell.rowIndex][cell.columnIndex] = cell.content || '';
+                  }
+                });
                 
                 tables.push(cleanTable);
               });
@@ -145,8 +181,13 @@ export default async function handler(req, res) {
               labels,
               tables,
               modelId: pollData.analyzeResult?.modelId || null,
-              confidence: document?.confidence || null
+              confidence: document?.confidence || null,
+              // Include raw response for debugging
+              rawResponse: pollData.analyzeResult
             };
+            
+            console.log('Processed labels:', Object.keys(labels));
+            console.log('Processed tables:', tables.length);
             
             return res.status(200).json(cleanResponse);
           } else if (pollData.status === 'failed') {
