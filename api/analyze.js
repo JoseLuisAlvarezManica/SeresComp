@@ -19,7 +19,7 @@ export default async function handler(req, res) {
     multiples: false, 
     uploadDir: '/tmp', 
     keepExtensions: true,
-    maxFileSize: 50 * 1024 * 1024 // 50MB limit
+    maxFileSize: 50 * 1024 * 1024
   });
 
   form.parse(req, async (err, fields, files) => {
@@ -28,7 +28,6 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Error parsing file', detail: err.message });
     }
 
-    // Handle both single file and array of files
     const file = Array.isArray(files.file) ? files.file[0] : files.file;
     
     if (!file?.filepath) {
@@ -39,87 +38,138 @@ export default async function handler(req, res) {
       const buffer = await readFile(file.filepath);
       console.log('File read successfully, size:', buffer.length);
 
-      // Check if environment variables are set
-      if (!process.env.FORM_ENDPOINT || !process.env.FORM_MODELID || !process.env.FORM_API_KEY) {
-        return res.status(500).json({ error: 'Missing required environment variables' });
-      }
+      // Check environment variables
+      const endpoint = process.env.FORM_ENDPOINT;
+      const modelId = process.env.FORM_MODELID;
+      const apiKey = process.env.FORM_API_KEY;
 
-      const azureEndpoint = `${process.env.FORM_ENDPOINT}/documentModels/${process.env.FORM_MODELID}:analyze?api-version=2023-07-31`;
-      
-      console.log('Calling Azure endpoint:', azureEndpoint);
+      console.log('Environment check:');
+      console.log('- FORM_ENDPOINT:', endpoint ? 'SET' : 'MISSING');
+      console.log('- FORM_MODELID:', modelId ? 'SET' : 'MISSING');
+      console.log('- FORM_API_KEY:', apiKey ? 'SET (length: ' + apiKey.length + ')' : 'MISSING');
 
-      const azureRes = await fetch(azureEndpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/octet-stream',
-          'Ocp-Apim-Subscription-Key': process.env.FORM_API_KEY,
-        },
-        body: buffer,
-      });
-
-      console.log('Azure response status:', azureRes.status);
-
-      if (!azureRes.ok) {
-        const errorText = await azureRes.text();
-        console.error('Azure API error:', errorText);
-        return res.status(azureRes.status).json({ 
-          error: 'Azure API error', 
-          status: azureRes.status,
-          body: errorText 
+      if (!endpoint || !modelId || !apiKey) {
+        return res.status(500).json({ 
+          error: 'Missing required environment variables',
+          details: {
+            endpoint: !!endpoint,
+            modelId: !!modelId,
+            apiKey: !!apiKey
+          }
         });
       }
 
-      const location = azureRes.headers.get('operation-location');
-      if (!location) {
-        const errorText = await azureRes.text();
-        console.error('Missing operation-location header');
-        return res.status(500).json({ error: 'Missing operation-location header', body: errorText });
-      }
+      // Try different endpoint patterns
+      const baseEndpoint = endpoint.replace(/\/$/, '');
+      const endpointVariations = [
+        `${baseEndpoint}/formrecognizer/documentModels/${modelId}:analyze?api-version=2023-07-31`,
+        `${baseEndpoint}/documentModels/${modelId}:analyze?api-version=2023-07-31`,
+        `${baseEndpoint}/formrecognizer/documentModels/${modelId}:analyze?api-version=2022-08-31`,
+        `${baseEndpoint}/documentModels/${modelId}:analyze?api-version=2022-08-31`
+      ];
 
-      console.log('Polling location:', location);
-
-      // Poll until analysis completes with better error handling
-      for (let i = 0; i < 30; i++) { // Increased attempts
-        await new Promise(r => setTimeout(r, 2000));
+      console.log('Trying endpoint variations:');
+      
+      for (let i = 0; i < endpointVariations.length; i++) {
+        const testEndpoint = endpointVariations[i];
+        console.log(`Attempt ${i + 1}: ${testEndpoint}`);
 
         try {
-          const pollRes = await fetch(location, {
-            headers: { 'Ocp-Apim-Subscription-Key': process.env.FORM_API_KEY },
+          const azureRes = await fetch(testEndpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/octet-stream',
+              'Ocp-Apim-Subscription-Key': apiKey,
+            },
+            body: buffer,
           });
 
-          if (!pollRes.ok) {
-            const errorText = await pollRes.text();
-            console.error('Polling error:', errorText);
-            return res.status(pollRes.status).json({ 
-              error: 'Polling failed', 
-              status: pollRes.status,
-              body: errorText 
+          console.log(`Response status: ${azureRes.status}`);
+
+          if (azureRes.status === 202) {
+            // Success! Get the operation location
+            const location = azureRes.headers.get('operation-location');
+            if (!location) {
+              return res.status(500).json({ error: 'Missing operation-location header' });
+            }
+
+            console.log('Success! Polling location:', location);
+
+            // Poll for results
+            for (let j = 0; j < 30; j++) {
+              await new Promise(r => setTimeout(r, 2000));
+
+              const pollRes = await fetch(location, {
+                headers: { 'Ocp-Apim-Subscription-Key': apiKey },
+              });
+
+              if (!pollRes.ok) {
+                const errorText = await pollRes.text();
+                console.error('Polling error:', errorText);
+                return res.status(pollRes.status).json({ 
+                  error: 'Polling failed', 
+                  status: pollRes.status,
+                  body: errorText 
+                });
+              }
+
+              const pollData = await pollRes.json();
+              console.log('Poll attempt', j + 1, 'Status:', pollData.status);
+
+              if (pollData.status === 'succeeded') {
+                // Clean up temp file
+                try {
+                  fs.unlinkSync(file.filepath);
+                } catch (unlinkErr) {
+                  console.warn('Could not delete temp file:', unlinkErr.message);
+                }
+                
+                return res.status(200).json({
+                  success: true,
+                  workingEndpoint: testEndpoint,
+                  result: pollData
+                });
+              } else if (pollData.status === 'failed') {
+                return res.status(500).json({ 
+                  error: 'Azure analysis failed', 
+                  details: pollData 
+                });
+              }
+            }
+
+            return res.status(500).json({ error: 'Timed out waiting for result' });
+          
+          } else if (azureRes.status === 404) {
+            const errorText = await azureRes.text();
+            console.log(`404 error with endpoint ${i + 1}:`, errorText);
+            
+            // Continue to next endpoint variation
+            continue;
+          } else {
+            const errorText = await azureRes.text();
+            console.error(`Error with endpoint ${i + 1}:`, errorText);
+            
+            // For non-404 errors, return immediately
+            return res.status(azureRes.status).json({ 
+              error: 'Azure API error', 
+              status: azureRes.status,
+              body: errorText,
+              endpoint: testEndpoint
             });
           }
-
-          const pollData = await pollRes.json();
-          console.log('Poll attempt', i + 1, 'Status:', pollData.status);
-
-          if (pollData.status === 'succeeded') {
-            // Clean up temporary file
-            try {
-              fs.unlinkSync(file.filepath);
-            } catch (unlinkErr) {
-              console.warn('Could not delete temp file:', unlinkErr.message);
-            }
-            
-            return res.status(200).json(pollData);
-          } else if (pollData.status === 'failed') {
-            return res.status(500).json({ error: 'Azure analysis failed', details: pollData });
-          }
-          // Continue polling if status is 'running' or 'notStarted'
-        } catch (pollError) {
-          console.error('Polling request failed:', pollError);
-          return res.status(500).json({ error: 'Polling request failed', details: pollError.message });
+        } catch (fetchError) {
+          console.error(`Fetch error with endpoint ${i + 1}:`, fetchError.message);
+          continue;
         }
       }
 
-      return res.status(500).json({ error: 'Timed out waiting for result after 60 seconds' });
+      // If we get here, all endpoints failed
+      return res.status(404).json({ 
+        error: 'All endpoint variations failed with 404',
+        tried: endpointVariations,
+        suggestion: 'Please check your model ID and endpoint configuration'
+      });
+
     } catch (e) {
       console.error('Unexpected error:', e);
       return res.status(500).json({ error: e.message || 'Unexpected server error' });
