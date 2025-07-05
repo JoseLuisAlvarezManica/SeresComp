@@ -8,7 +8,7 @@ const DocumentViewer = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [sortBy, setSortBy] = useState('fecha'); 
+  const [sortBy, setSortBy] = useState('fecha'); // Changed from 'created_at' to 'fecha'
   const [sortOrder, setSortOrder] = useState('desc');
   const [selectedDocument, setSelectedDocument] = useState(null);
 
@@ -25,10 +25,10 @@ const DocumentViewer = () => {
       setLoading(true);
       setError(null);
       const docs = await getAllDocuments();
-      console.log('Loaded documents:', docs);
+      console.log('Loaded documents:', docs); // Debug log
       if (docs.length > 0) {
-        console.log('First document fields:', Object.keys(docs[0]));
-        console.log('First document:', docs[0]); 
+        console.log('First document fields:', Object.keys(docs[0])); // Debug log
+        console.log('First document:', docs[0]); // Debug log
       }
       setDocuments(docs);
     } catch (err) {
@@ -54,10 +54,12 @@ const DocumentViewer = () => {
       let aValue = a[sortBy];
       let bValue = b[sortBy];
 
+      // Handle fecha field specifically (ISO date strings)
       if (sortBy === 'fecha' || sortBy === 'Fecha') {
         aValue = new Date(aValue || 0);
         bValue = new Date(bValue || 0);
       }
+      // Handle Firestore timestamp objects
       else if (aValue && typeof aValue === 'object' && aValue.seconds) {
         aValue = aValue.seconds;
       }
@@ -177,6 +179,7 @@ const DocumentViewer = () => {
             </div>
           )}
 
+          {/* Search and Filter Controls */}
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -228,85 +231,93 @@ const DocumentViewer = () => {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredDocuments.map((doc) => (
-                <div
-                  key={doc.id}
-                  className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <FileText className="w-5 h-5 text-blue-600" />
-                      <span className="font-medium text-gray-900 truncate">
-                        {doc['Folio fiscal'] || 'Unknown Folio'}
-                      </span>
-                    </div>
-                    <button
-                      onClick={() => setSelectedDocument(doc)}
-                      className="text-blue-600 hover:text-blue-800 p-1"
-                      title="View Details"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </button>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Calendar className="w-4 h-4" />
-                      <span>{formatDate(doc.fecha || doc.Fecha || doc.created_at || doc.timestamp)}</span>
-                    </div>
-                    
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <DollarSign className="w-4 h-4" />
-                      <span className="font-medium">{formatCurrency(doc.Total)}</span>
-                    </div>
-
-                    {doc['Método de pago'] && (
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Hash className="w-4 h-4" />
-                        <span className="truncate">{doc['Método de pago']}</span>
-                      </div>
-                    )}
-
-                    {doc['Domicilio fiscal'] && (
-                      <div className="text-xs text-gray-500 mt-2 truncate">
-                        {doc['Domicilio fiscal']}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="mt-3 pt-3 border-t border-gray-100">
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-gray-500">
-                        Date: {formatDate(doc.fecha || doc.Fecha || doc.created_at || doc.timestamp)}
-                      </span>
-                      <div className="flex gap-1">
-                        <button
-                          onClick={() => setSelectedDocument(doc)}
-                          className="p-1 text-blue-600 hover:bg-blue-50 rounded"
-                          title="View"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => console.log('Edit:', doc.id)}
-                          className="p-1 text-green-600 hover:bg-green-50 rounded"
-                          title="Edit"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => console.log('Delete:', doc.id)}
-                          className="p-1 text-red-600 hover:bg-red-50 rounded"
-                          title="Delete"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
+            <div className="overflow-x-auto">
+              <table className="min-w-full bg-white border border-gray-200 rounded-lg">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                      Folio Fiscal
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                      Date
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                      Total
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                      Payment Method
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                      Address
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {filteredDocuments.map((doc) => (
+                    <tr key={doc.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <FileText className="w-4 h-4 text-blue-600 mr-2" />
+                          <span className="text-sm font-medium text-gray-900">
+                            {doc['Folio fiscal'] || 'Unknown Folio'}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center text-sm text-gray-900">
+                          <Calendar className="w-4 h-4 text-gray-400 mr-2" />
+                          {formatDate(doc.fecha || doc.Fecha || doc.created_at || doc.timestamp)}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center text-sm text-gray-900">
+                          <DollarSign className="w-4 h-4 text-green-600 mr-2" />
+                          <span className="font-medium">{formatCurrency(doc.Total)}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center text-sm text-gray-900">
+                          <Hash className="w-4 h-4 text-gray-400 mr-2" />
+                          <span className="truncate max-w-xs">{doc['Método de pago'] || 'N/A'}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-900 truncate max-w-xs">
+                          {doc['Domicilio fiscal'] || 'N/A'}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex justify-end space-x-2">
+                          <button
+                            onClick={() => setSelectedDocument(doc)}
+                            className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50"
+                            title="View Details"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => console.log('Edit:', doc.id)}
+                            className="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-50"
+                            title="Edit"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => console.log('Delete:', doc.id)}
+                            className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </div>
