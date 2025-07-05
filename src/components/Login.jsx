@@ -23,6 +23,10 @@ const Login = ({ setIsAuthenticated }) => {
     }
   };
 
+  // This is Tailwind blue-600 (#2563eb), vibrant and modern
+  const blue = "#2563eb";
+  const blueHover = "#1d4fd7"; // Tailwind blue-700
+
   return (
     <div className="min-h-screen flex flex-col bg-[#f7f8fa] text-black">
       <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 flex-1">
@@ -53,7 +57,7 @@ const Login = ({ setIsAuthenticated }) => {
                   required
                   className="appearance-none block w-full px-3 py-2 border border-[#d3d3d3]
                              bg-[#f8fafc] text-black rounded-md focus:outline-none focus:ring-2
-                             focus:ring-[#8db3fa] focus:border-[#8db3fa] sm:text-sm transition placeholder:text-[#8a8a8a]"
+                             focus:ring-[#2563eb] focus:border-[#2563eb] sm:text-sm transition placeholder:text-[#8a8a8a]"
                   placeholder="Correo Electrónico"
                   onChange={(e) => setEmail(e.target.value)}
                   style={{ fontWeight: 500 }}
@@ -65,7 +69,7 @@ const Login = ({ setIsAuthenticated }) => {
                   required
                   className="appearance-none block w-full px-3 py-2 border border-[#d3d3d3]
                              bg-[#f8fafc] text-black rounded-md focus:outline-none focus:ring-2
-                             focus:ring-[#8db3fa] focus:border-[#8db3fa] sm:text-sm transition placeholder:text-[#8a8a8a]"
+                             focus:ring-[#2563eb] focus:border-[#2563eb] sm:text-sm transition placeholder:text-[#8a8a8a]"
                   placeholder="Contraseña"
                   onChange={(e) => setPassword(e.target.value)}
                   style={{ fontWeight: 500 }}
@@ -76,10 +80,15 @@ const Login = ({ setIsAuthenticated }) => {
             <div>
               <Button
                 type="submit"
-                className="w-full py-2 px-4 rounded-md font-semibold bg-[#8db3fa] text-white 
-                           hover:bg-[#6a9bf7] focus:outline-none focus:ring-2 focus:ring-[#8db3fa]
-                           transition"
-                style={{ fontWeight: 600 }}
+                className="w-full py-2 px-4 rounded-md font-semibold"
+                style={{
+                  background: blue,
+                  color: "#fff",
+                  fontWeight: 600,
+                  transition: "background 0.2s",
+                }}
+                onMouseOver={e => e.currentTarget.style.background = blueHover}
+                onMouseOut={e => e.currentTarget.style.background = blue}
               >
                 Iniciar Sesión
               </Button>
