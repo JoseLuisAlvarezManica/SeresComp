@@ -248,7 +248,6 @@ export const Scanner = () => {
             </div>
         </div>
         
-        {/* Column delete buttons row */}
         <div className="mb-2">
             <div className="flex">
             <div className="w-8 flex-shrink-0"></div> {/* Space for row number column */}
@@ -258,7 +257,7 @@ export const Scanner = () => {
                     onClick={() => removeTableColumn(colIndex)}
                     variant="destructive"
                     size="sm"
-                    className="w-6 h-6 p-0 rounded-full"
+                    className="w-6 h-6 p-0"
                     title="Delete Column"
                 >
                     <X className="w-3 h-3" />
@@ -283,7 +282,7 @@ export const Scanner = () => {
                             onClick={() => removeTableRow(rowIndex)}
                             variant="destructive"
                             size="sm"
-                            className="w-5 h-5 p-0 rounded-full"
+                            className="w-5 h-5 p-0"
                             title="Delete Row"
                             >
                             <X className="w-3 h-3" />
@@ -426,16 +425,6 @@ export const Scanner = () => {
                 Subir a base de datos
               </button>
             </div>
-            
-
-            <details className="bg-gray-50 rounded-lg p-4">
-              <summary className="cursor-pointer font-medium text-gray-700">
-                Raw Response (for debugging)
-              </summary>
-              <pre className="mt-3 text-xs overflow-auto max-h-60 bg-white p-3 rounded border">
-                {JSON.stringify(result, null, 2)}
-              </pre>
-            </details>
           </div>
         )}
       </div>
