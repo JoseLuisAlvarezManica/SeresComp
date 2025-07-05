@@ -23,10 +23,6 @@ const Login = ({ setIsAuthenticated }) => {
     }
   };
 
-  // This is Tailwind blue-600 (#2563eb), vibrant and modern
-  const blue = "#2563eb";
-  const blueHover = "#1d4fd7"; // Tailwind blue-700
-
   return (
     <div className="min-h-screen flex flex-col bg-[#f7f8fa] text-black">
       <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 flex-1">
