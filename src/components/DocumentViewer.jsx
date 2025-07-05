@@ -8,7 +8,7 @@ const DocumentViewer = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [sortBy, setSortBy] = useState('fecha'); // Changed from 'created_at' to 'fecha'
+  const [sortBy, setSortBy] = useState('fecha'); 
   const [sortOrder, setSortOrder] = useState('desc');
   const [selectedDocument, setSelectedDocument] = useState(null);
 
@@ -25,6 +25,11 @@ const DocumentViewer = () => {
       setLoading(true);
       setError(null);
       const docs = await getAllDocuments();
+      console.log('Loaded documents:', docs);
+      if (docs.length > 0) {
+        console.log('First document fields:', Object.keys(docs[0]));
+        console.log('First document:', docs[0]); 
+      }
       setDocuments(docs);
     } catch (err) {
       console.error('Error loading documents:', err);
@@ -172,7 +177,6 @@ const DocumentViewer = () => {
             </div>
           )}
 
-          {/* Search and Filter Controls */}
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -191,7 +195,10 @@ const DocumentViewer = () => {
                 onChange={(e) => setSortBy(e.target.value)}
                 className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="fecha">Document Date</option>
+                <option value="fecha">Document Date (fecha)</option>
+                <option value="Fecha">Document Date (Fecha)</option>
+                <option value="created_at">Created Date</option>
+                <option value="timestamp">Timestamp</option>
                 <option value="Folio fiscal">Folio</option>
                 <option value="Total">Total</option>
               </select>
@@ -246,7 +253,7 @@ const DocumentViewer = () => {
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <Calendar className="w-4 h-4" />
-                      <span>{formatDate(doc.fecha)}</span>
+                      <span>{formatDate(doc.fecha || doc.Fecha || doc.created_at || doc.timestamp)}</span>
                     </div>
                     
                     <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -271,7 +278,7 @@ const DocumentViewer = () => {
                   <div className="mt-3 pt-3 border-t border-gray-100">
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-gray-500">
-                        Date: {formatDate(doc.fecha)}
+                        Date: {formatDate(doc.fecha || doc.Fecha || doc.created_at || doc.timestamp)}
                       </span>
                       <div className="flex gap-1">
                         <button
