@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import LogoutButton from './LogoutButton';
-import Logo from '../components/Logo.svg';
+import { ReactComponent as Logo } from '../assets/logo.svg';
 
 const NavBar = ({ setIsAuthenticated }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -12,7 +12,7 @@ const NavBar = ({ setIsAuthenticated }) => {
         <div className="flex h-16 justify-between items-center">
 
           <div className="flex items-center space-x-4">
-            <img src={Logo}  className="h-8 w-auto"/>
+            <Logo className="h-8 w-auto" />
             <Link
               to="/submit"
               className="text-white hover:text-[#A1A7B3] transition-colors px-3 py-2 text-sm font-medium"
