@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Scanner from './components/Scanner';
 import DocumentViewer from './components/DocumentViewer';
 import { onAuthStateChanged } from 'firebase/auth';
