@@ -3,8 +3,6 @@ import { useState } from 'react';
 import {createDocument} from '../services/documentManager';
 import { Button } from '@/components/ui/button';
 import { X, Plus } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-
 
 export const Scanner = () => {
   const [file, setFile] = useState(null);
@@ -160,9 +158,9 @@ export const Scanner = () => {
         return;
       }
       
-      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/bmp', 'image/tiff', 'application/pdf'];
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/bmp', 'application/pdf'];
       if (!allowedTypes.includes(selectedFile.type)) {
-        setError('Please select a valid image file (JPEG, PNG, GIF, BMP, TIFF) or PDF');
+        setError('Please select a valid image file (JPEG, PNG, BMP) or PDF');
         return;
       }
       
@@ -181,31 +179,28 @@ export const Scanner = () => {
     const textColor = getConfidenceColor(confidence);
     
     return (
-            <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Upload Document
-          </label>
-          <Input
-            type="file"
-            accept="image/*,application/pdf"
-            onChange={handleFileChange}
-          />
-          {file && (
-            <p className="text-sm text-gray-600 mt-2">
-              Selected: {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
-            </p>
+      <div key={fieldName} className="p-4 bg-gray-50 rounded-lg">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="font-medium text-sm text-gray-700">{fieldName}</span>
+          {label.type && (
+            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+              {label.type}
+            </span>
+          )}
+          {confidence > 0 && (
+            <span className={`text-xs ${confidence < 0.5 ? 'text-red-600' : 'text-gray-500'}`}>
+              {(confidence * 100).toFixed(1)}%
+            </span>
           )}
         </div>
-
-        <Button
-          type="submit"
-          disabled={!file || loading}
-          className="w-full"
-        >
-          {loading ? 'Analyzing Document...' : 'Analyze Document'}
-        </Button>
-      </form>
+        <input
+          type="text"
+          value={editableData[fieldName] || ''}
+          onChange={(e) => handleFieldChange(fieldName, e.target.value)}
+          className={`w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${textColor}`}
+          placeholder={`Enter ${fieldName}`}
+        />
+      </div>
     );
   };
 
