@@ -6,35 +6,33 @@ const NavBar = ({ setIsAuthenticated }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <nav className="bg-gray-800 text-white shadow-sm">
+    <nav className="bg-[#202633] text-white shadow-sm">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 justify-between items-center">
 
           <div className="flex items-center space-x-4">
             <Link
               to="/submit"
-              className="text-gray-300 hover:text-white transition-colors px-3 py-2 text-sm font-medium"
+              className="text-white hover:text-[#A1A7B3] transition-colors px-3 py-2 text-sm font-medium"
             >
               Documentar
             </Link>
             <Link
               to="/analyze"
-              className="text-gray-300 hover:text-white transition-colors px-3 py-2 text-sm font-medium"
+              className="text-white hover:text-[#A1A7B3] transition-colors px-3 py-2 text-sm font-medium"
             >
               Revisión
             </Link>
           </div>
 
-
           <div className="hidden md:block">
             <LogoutButton setIsAuthenticated={setIsAuthenticated} />
           </div>
 
-
           <div className="md:hidden">
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="text-gray-300 hover:text-white focus:outline-none"
+              className="text-white hover:text-[#A1A7B3] focus:outline-none"
             >
               <svg className="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
                 {isOpen ? (
@@ -55,22 +53,22 @@ const NavBar = ({ setIsAuthenticated }) => {
       </div>
 
       {isOpen && (
-        <div className="md:hidden bg-gray-700 px-2 pt-2 pb-3 space-y-1">
+        <div className="md:hidden bg-[#24293B] px-2 pt-2 pb-3 space-y-1">
           <Link
             to="/submit"
             onClick={() => setIsOpen(false)}
-            className="block text-gray-300 hover:text-white px-3 py-2 rounded-md text-base font-medium"
+            className="block text-white hover:text-[#A1A7B3] px-3 py-2 rounded-md text-base font-medium"
           >
             Documentar
           </Link>
           <Link
             to="/analyze"
             onClick={() => setIsOpen(false)}
-            className="block text-gray-300 hover:text-white px-3 py-2 rounded-md text-base font-medium"
+            className="block text-white hover:text-[#A1A7B3] px-3 py-2 rounded-md text-base font-medium"
           >
             Revisión
           </Link>
-          <div className="border-t border-gray-600 pt-3">
+          <div className="border-t border-[#35394A] pt-3">
             <LogoutButton setIsAuthenticated={setIsAuthenticated} />
           </div>
         </div>
