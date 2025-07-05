@@ -90,6 +90,70 @@ export const Scanner = () => {
     }));
   };
 
+  // Add new row to table
+  const addTableRow = () => {
+    setEditableData(prev => {
+      if (!prev.TabladeCompra || prev.TabladeCompra.length === 0) {
+        return prev;
+      }
+      
+      const columnCount = prev.TabladeCompra[0].length;
+      const newRow = Array(columnCount).fill('');
+      
+      return {
+        ...prev,
+        TabladeCompra: [...prev.TabladeCompra, newRow]
+      };
+    });
+  };
+
+  // Remove row from table
+  const removeTableRow = (rowIndex) => {
+    setEditableData(prev => {
+      if (!prev.TabladeCompra || prev.TabladeCompra.length <= 1) {
+        return prev; // Don't remove if it's the only row (header)
+      }
+      
+      return {
+        ...prev,
+        TabladeCompra: prev.TabladeCompra.filter((_, index) => index !== rowIndex)
+      };
+    });
+  };
+
+  // Add new column to table
+  const addTableColumn = () => {
+    setEditableData(prev => {
+      if (!prev.TabladeCompra || prev.TabladeCompra.length === 0) {
+        return prev;
+      }
+      
+      return {
+        ...prev,
+        TabladeCompra: prev.TabladeCompra.map((row, index) => [
+          ...row,
+          index === 0 ? 'New Column' : '' // Header for first row, empty for others
+        ])
+      };
+    });
+  };
+
+  // Remove column from table
+  const removeTableColumn = (colIndex) => {
+    setEditableData(prev => {
+      if (!prev.TabladeCompra || prev.TabladeCompra.length === 0 || prev.TabladeCompra[0].length <= 1) {
+        return prev; // Don't remove if it's the only column
+      }
+      
+      return {
+        ...prev,
+        TabladeCompra: prev.TabladeCompra.map(row => 
+          row.filter((_, index) => index !== colIndex)
+        )
+      };
+    });
+  };
+
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
     if (selectedFile) {
@@ -154,27 +218,85 @@ export const Scanner = () => {
     
     return (
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <div className="flex items-center gap-2 mb-3">
-          <h3 className="font-medium text-blue-900">
-            Tabla de Compra (Purchase Table)
-          </h3>
-          {confidence > 0 && (
-            <span className={`text-xs ${confidence < 0.5 ? 'text-red-600' : 'text-gray-500'}`}>
-              {(confidence * 100).toFixed(1)}%
-            </span>
-          )}
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <h3 className="font-medium text-blue-900">
+              Tabla de Compra (Purchase Table)
+            </h3>
+            {confidence > 0 && (
+              <span className={`text-xs ${confidence < 0.5 ? 'text-red-600' : 'text-gray-500'}`}>
+                {(confidence * 100).toFixed(1)}%
+              </span>
+            )}
+          </div>
+          
+          {/* Table modification buttons */}
+          <div className="flex gap-2">
+            <button
+              onClick={addTableRow}
+              className="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors"
+              title="Add Row"
+            >
+              + Row
+            </button>
+            <button
+              onClick={addTableColumn}
+              className="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors"
+              title="Add Column"
+            >
+              + Column
+            </button>
+          </div>
         </div>
+        
         <div className="overflow-x-auto">
           <table className="min-w-full border border-gray-300">
             <tbody>
               {tableData.map((row, rowIndex) => (
                 <tr key={rowIndex} className={`border-b border-gray-300 ${rowIndex === 0 ? 'bg-gray-100' : 'bg-white'}`}>
+                  {/* Row delete button */}
+                  {rowIndex > 0 && (
+                    <td className="border-r border-gray-300 p-1 w-8 bg-red-50">
+                      <button
+                        onClick={() => removeTableRow(rowIndex)}
+                        className="w-full h-full text-red-600 hover:bg-red-100 rounded text-xs"
+                        title="Delete Row"
+                      >
+                        ×
+                      </button>
+                    </td>
+                  )}
+                  {rowIndex === 0 && (
+                    <td className="border-r border-gray-300 p-1 w-8 bg-gray-100">
+                      <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
+                        #
+                      </div>
+                    </td>
+                  )}
+                  
                   {row.map((cell, colIndex) => (
-                    <td key={colIndex} className="border-r border-gray-300 last:border-r-0 p-1">
-                      {rowIndex === 0 ? (
-                        <div className="font-medium text-sm text-gray-700 p-2">
-                          {cell}
+                    <td key={colIndex} className="border-r border-gray-300 last:border-r-0 p-1 relative">
+                      {/* Column delete button (only in header row) */}
+                      {rowIndex === 0 && (
+                        <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
+                          <button
+                            onClick={() => removeTableColumn(colIndex)}
+                            className="w-5 h-5 bg-red-600 text-white rounded-full text-xs hover:bg-red-700 transition-colors"
+                            title="Delete Column"
+                          >
+                            ×
+                          </button>
                         </div>
+                      )}
+                      
+                      {rowIndex === 0 ? (
+                        <input
+                          type="text"
+                          value={cell}
+                          onChange={(e) => handleTableCellChange(rowIndex, colIndex, e.target.value)}
+                          className="w-full p-2 border-none bg-transparent focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium text-sm text-gray-700"
+                          placeholder="Column Header"
+                        />
                       ) : (
                         <input
                           type="text"
@@ -189,6 +311,12 @@ export const Scanner = () => {
               ))}
             </tbody>
           </table>
+        </div>
+        
+        <div className="mt-2 text-xs text-gray-600">
+          <p>• Click column headers to edit them</p>
+          <p>• Use + Row/Column buttons to add, × buttons to remove</p>
+          <p>• Headers cannot be deleted if it's the only row/column</p>
         </div>
       </div>
     );

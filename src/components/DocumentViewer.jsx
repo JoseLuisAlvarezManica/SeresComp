@@ -152,10 +152,10 @@ const DocumentViewer = () => {
             </p>
             <div className="bg-gray-50 p-3 rounded-lg">
               <p className="text-sm text-gray-600">
-                <span className="font-medium">Folio:</span> {document['Folio fiscal'] || 'Unknown'}
+                <span className="font-medium">Folio:</span> {document['Folio fiscal']}
               </p>
               <p className="text-sm text-gray-600">
-                <span className="font-medium">Date:</span> {formatDate(document.fecha || document.created_at)}
+                <span className="font-medium">Date:</span> {formatDate(document.fecha)}
               </p>
               <p className="text-sm text-gray-600">
                 <span className="font-medium">Total:</span> {formatCurrency(document.Total)}
