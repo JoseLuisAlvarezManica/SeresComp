@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Eye, Trash2, Edit, FileText, Calendar, DollarSign, Hash } from 'lucide-react';
+import { Search, Eye, Trash2, Edit, FileText, Calendar, DollarSign, Hash, ShoppingCart } from 'lucide-react';
 import { getAllDocuments } from '@/services/documentManager';
 
 const DocumentViewer = () => {
