@@ -8,7 +8,7 @@ const DocumentViewer = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [sortBy, setSortBy] = useState('fecha'); // Changed from 'created_at' to 'fecha'
+  const [sortBy, setSortBy] = useState('fecha');
   const [sortOrder, setSortOrder] = useState('desc');
   const [selectedDocument, setSelectedDocument] = useState(null);
 
@@ -25,10 +25,10 @@ const DocumentViewer = () => {
       setLoading(true);
       setError(null);
       const docs = await getAllDocuments();
-      console.log('Loaded documents:', docs); // Debug log
+      console.log('Loaded documents:', docs);
       if (docs.length > 0) {
-        console.log('First document fields:', Object.keys(docs[0])); // Debug log
-        console.log('First document:', docs[0]); // Debug log
+        console.log('First document fields:', Object.keys(docs[0]));
+        console.log('First document:', docs[0]);
       }
       setDocuments(docs);
     } catch (err) {
@@ -54,12 +54,10 @@ const DocumentViewer = () => {
       let aValue = a[sortBy];
       let bValue = b[sortBy];
 
-      // Handle fecha field specifically (ISO date strings)
       if (sortBy === 'fecha' || sortBy === 'Fecha') {
         aValue = new Date(aValue || 0);
         bValue = new Date(bValue || 0);
       }
-      // Handle Firestore timestamp objects
       else if (aValue && typeof aValue === 'object' && aValue.seconds) {
         aValue = aValue.seconds;
       }
@@ -109,42 +107,174 @@ const DocumentViewer = () => {
     return isNaN(num) ? amount : `$${num.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
   };
 
+  // Parse TabladeCompra JSON data
+  const parseTabladeCompra = (document) => {
+    if (document.TabladeCompra_json) {
+      try {
+        return JSON.parse(document.TabladeCompra_json);
+      } catch (error) {
+        console.error('Error parsing TabladeCompra_json:', error);
+        return [];
+      }
+    }
+    return [];
+  };
+
+  // Component to display TabladeCompra as a table
+  const TabladeCompraTable = ({ document }) => {
+    const tableData = parseTabladeCompra(document);
+    
+    if (tableData.length === 0) {
+      return (
+        <div className="text-center py-4 text-gray-500">
+          <ShoppingCart className="mx-auto h-8 w-8 mb-2" />
+          <p>No purchase table data available</p>
+        </div>
+      );
+    }
+
+    const headers = tableData[0];
+    const rows = tableData.slice(1);
+
+    const isNumericColumn = (columnIndex) => {
+      const header = headers[columnIndex]?.toLowerCase();
+      return header === 'p/u' || header === 'importe' || header === 'cantidad';
+    };
+
+    const formatTableCurrency = (value) => {
+      const cleanValue = value.replace(/,/g, '');
+      if (!isNaN(cleanValue) && cleanValue !== '') {
+        return new Intl.NumberFormat('es-MX', {
+          style: 'currency',
+          currency: 'MXN'
+        }).format(parseFloat(cleanValue));
+      }
+      return value;
+    };
+
+    return (
+      <div className="mt-4">
+        <div className="flex items-center mb-3">
+          <ShoppingCart className="w-5 h-5 text-blue-600 mr-2" />
+          <h3 className="text-lg font-semibold text-gray-900">Tabla de Compra</h3>
+        </div>
+        
+        <div className="overflow-x-auto border border-gray-200 rounded-lg">
+          <table className="min-w-full bg-white">
+            <thead className="bg-gray-50">
+              <tr>
+                {headers.map((header, index) => (
+                  <th
+                    key={index}
+                    className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b"
+                  >
+                    {header}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {rows.map((row, rowIndex) => (
+                <tr key={rowIndex} className="hover:bg-gray-50">
+                  {row.map((cell, cellIndex) => (
+                    <td
+                      key={cellIndex}
+                      className={`px-4 py-3 text-sm ${
+                        isNumericColumn(cellIndex)
+                          ? 'text-right font-medium text-gray-900'
+                          : 'text-gray-900'
+                      }`}
+                    >
+                      {isNumericColumn(cellIndex) && 
+                       (headers[cellIndex].toLowerCase() === 'p/u' || 
+                        headers[cellIndex].toLowerCase() === 'importe')
+                        ? formatTableCurrency(cell)
+                        : cell}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Summary for TabladeCompra */}
+        <div className="mt-3 p-3 bg-gray-50 rounded-lg">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+            <div>
+              <span className="font-medium text-gray-600">Total Items:</span>
+              <span className="ml-2 text-gray-900">{rows.length}</span>
+            </div>
+            <div>
+              <span className="font-medium text-gray-600">Total Quantity:</span>
+              <span className="ml-2 text-gray-900">
+                {rows.reduce((sum, row) => {
+                  const qty = parseInt(row[0]?.replace(/,/g, '') || 0);
+                  return sum + qty;
+                }, 0)}
+              </span>
+            </div>
+            <div>
+              <span className="font-medium text-gray-600">Total Amount:</span>
+              <span className="ml-2 text-gray-900 font-medium">
+                {formatTableCurrency(
+                  rows.reduce((sum, row) => {
+                    const amount = parseFloat(row[5]?.replace(/,/g, '') || 0);
+                    return sum + amount;
+                  }, 0).toString()
+                )}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const DocumentDetailModal = ({ document, onClose }) => {
     if (!document) return null;
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-        <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="bg-white rounded-lg p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold text-gray-900">Document Details</h2>
             <button
               onClick={onClose}
-              className="text-gray-500 hover:text-gray-700"
+              className="text-gray-500 hover:text-gray-700 text-xl font-bold"
             >
               ✕
             </button>
           </div>
           
           <div className="space-y-4">
-            {Object.entries(document).map(([key, value]) => {
-              if (key === 'id') return null;
-              
-              let displayValue = value;
-              if (key.toLowerCase().includes('fecha') || key.includes('_at') || key.includes('_time')) {
-                displayValue = formatDate(value);
-              } else if (key.toLowerCase().includes('total') || key.toLowerCase().includes('iva')) {
-                displayValue = formatCurrency(value);
-              } else if (typeof value === 'object') {
-                displayValue = JSON.stringify(value, null, 2);
-              }
+            {/* Display TabladeCompra first if it exists */}
+            {document.TabladeCompra_json && (
+              <TabladeCompraTable document={document} />
+            )}
+            
+            {/* Display other document fields */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {Object.entries(document).map(([key, value]) => {
+                if (key === 'id' || key === 'TabladeCompra_json') return null;
+                
+                let displayValue = value;
+                if (key.toLowerCase().includes('fecha') || key.includes('_at') || key.includes('_time')) {
+                  displayValue = formatDate(value);
+                } else if (key.toLowerCase().includes('total') || key.toLowerCase().includes('iva')) {
+                  displayValue = formatCurrency(value);
+                } else if (typeof value === 'object') {
+                  displayValue = JSON.stringify(value, null, 2);
+                }
 
-              return (
-                <div key={key} className="border-b pb-2">
-                  <div className="font-medium text-gray-700 text-sm">{key}</div>
-                  <div className="text-gray-900 mt-1">{displayValue || 'N/A'}</div>
-                </div>
-              );
-            })}
+                return (
+                  <div key={key} className="border-b pb-2">
+                    <div className="font-medium text-gray-700 text-sm">{key}</div>
+                    <div className="text-gray-900 mt-1 break-words">{displayValue || 'N/A'}</div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
@@ -250,72 +380,86 @@ const DocumentViewer = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
                       Address
                     </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
+                      Items
+                    </th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
                       Actions
                     </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {filteredDocuments.map((doc) => (
-                    <tr key={doc.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <FileText className="w-4 h-4 text-blue-600 mr-2" />
-                          <span className="text-sm font-medium text-gray-900">
-                            {doc['Folio fiscal'] || 'Unknown Folio'}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center text-sm text-gray-900">
-                          <Calendar className="w-4 h-4 text-gray-400 mr-2" />
-                          {formatDate(doc.fecha || doc.Fecha || doc.created_at || doc.timestamp)}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center text-sm text-gray-900">
-                          <DollarSign className="w-4 h-4 text-green-600 mr-2" />
-                          <span className="font-medium">{formatCurrency(doc.Total)}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center text-sm text-gray-900">
-                          <Hash className="w-4 h-4 text-gray-400 mr-2" />
-                          <span className="truncate max-w-xs">{doc['Método de pago'] || 'N/A'}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900 truncate max-w-xs">
-                          {doc['Domicilio fiscal'] || 'N/A'}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex justify-end space-x-2">
-                          <button
-                            onClick={() => setSelectedDocument(doc)}
-                            className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50"
-                            title="View Details"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => console.log('Edit:', doc.id)}
-                            className="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-50"
-                            title="Edit"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => console.log('Delete:', doc.id)}
-                            className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50"
-                            title="Delete"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                  {filteredDocuments.map((doc) => {
+                    const tabladeCompra = parseTabladeCompra(doc);
+                    const itemCount = tabladeCompra.length > 0 ? tabladeCompra.length - 1 : 0;
+                    
+                    return (
+                      <tr key={doc.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <FileText className="w-4 h-4 text-blue-600 mr-2" />
+                            <span className="text-sm font-medium text-gray-900">
+                              {doc['Folio fiscal'] || 'Unknown Folio'}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center text-sm text-gray-900">
+                            <Calendar className="w-4 h-4 text-gray-400 mr-2" />
+                            {formatDate(doc.fecha || doc.Fecha || doc.created_at || doc.timestamp)}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center text-sm text-gray-900">
+                            <DollarSign className="w-4 h-4 text-green-600 mr-2" />
+                            <span className="font-medium">{formatCurrency(doc.Total)}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center text-sm text-gray-900">
+                            <Hash className="w-4 h-4 text-gray-400 mr-2" />
+                            <span className="truncate max-w-xs">{doc['Método de pago'] || 'N/A'}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm text-gray-900 truncate max-w-xs">
+                            {doc['Domicilio fiscal'] || 'N/A'}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center text-sm text-gray-900">
+                            <ShoppingCart className="w-4 h-4 text-gray-400 mr-2" />
+                            <span>{itemCount} item{itemCount !== 1 ? 's' : ''}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <div className="flex justify-end space-x-2">
+                            <button
+                              onClick={() => setSelectedDocument(doc)}
+                              className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50"
+                              title="View Details"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => console.log('Edit:', doc.id)}
+                              className="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-50"
+                              title="Edit"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => console.log('Delete:', doc.id)}
+                              className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50"
+                              title="Delete"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
