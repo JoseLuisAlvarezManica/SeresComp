@@ -16,24 +16,25 @@ import { db } from './firebaseConfig';
 export const getAllDocuments = async () => {
   try {
     console.log('Fetching all documents from Firestore...');
-    const printsCollection = collection(db, 'Facturas');
-    const q = query(printsCollection, orderBy('start_time', 'desc'));
-
+    const DocumentCollection = collection(db, 'Facturas');
+    const q = query(DocumentCollection, orderBy('fecha', 'desc'));
     const snapshot = await getDocs(q);
+    
     if (snapshot.empty) {
-      console.log('No prints found.');
+      console.log('No documents found.');
       return [];
     }
-
-    const prints = snapshot.docs.map((docSnap) => ({
+    
+    const documents = snapshot.docs.map((docSnap) => ({
       id: docSnap.id,
       ...docSnap.data(),
     }));
-    console.log('Fetched prints:', prints);
-    return prints;
+    
+    console.log('Fetched documents:', documents);
+    return documents;
   } catch (error) {
-    console.error('Error fetching prints:', error);
-    return [];
+    console.error('Error fetching documents:', error);
+    throw error; 
   }
 };
 
