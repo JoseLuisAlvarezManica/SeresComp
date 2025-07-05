@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { loginUser } from '../services/auth';
-import '@fontsource/inter/variable.css';
+import '@fontsource/inter/400.css';
 
 const Login = ({ setIsAuthenticated }) => {
   const [email, setEmail] = useState('');
