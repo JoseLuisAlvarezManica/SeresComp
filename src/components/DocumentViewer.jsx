@@ -8,7 +8,7 @@ const DocumentViewer = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [sortBy, setSortBy] = useState('created_at');
+  const [sortBy, setSortBy] = useState('fecha'); // Changed from 'created_at' to 'fecha'
   const [sortOrder, setSortOrder] = useState('desc');
   const [selectedDocument, setSelectedDocument] = useState(null);
 
@@ -49,7 +49,11 @@ const DocumentViewer = () => {
       let aValue = a[sortBy];
       let bValue = b[sortBy];
 
-      if (aValue && typeof aValue === 'object' && aValue.seconds) {
+      if (sortBy === 'fecha' || sortBy === 'Fecha') {
+        aValue = new Date(aValue || 0);
+        bValue = new Date(bValue || 0);
+      }
+      else if (aValue && typeof aValue === 'object' && aValue.seconds) {
         aValue = aValue.seconds;
       }
       if (bValue && typeof bValue === 'object' && bValue.seconds) {
@@ -187,8 +191,7 @@ const DocumentViewer = () => {
                 onChange={(e) => setSortBy(e.target.value)}
                 className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="created_at">Created Date</option>
-                <option value="Fecha">Document Date</option>
+                <option value="fecha">Document Date</option>
                 <option value="Folio fiscal">Folio</option>
                 <option value="Total">Total</option>
               </select>
@@ -243,7 +246,7 @@ const DocumentViewer = () => {
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <Calendar className="w-4 h-4" />
-                      <span>{formatDate(doc.Fecha)}</span>
+                      <span>{formatDate(doc.fecha)}</span>
                     </div>
                     
                     <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -268,7 +271,7 @@ const DocumentViewer = () => {
                   <div className="mt-3 pt-3 border-t border-gray-100">
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-gray-500">
-                        Created: {formatDate(doc.created_at)}
+                        Date: {formatDate(doc.fecha)}
                       </span>
                       <div className="flex gap-1">
                         <button

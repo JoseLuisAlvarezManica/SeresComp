@@ -17,8 +17,7 @@ export const getAllDocuments = async () => {
   try {
     console.log('Fetching all documents from Firestore...');
     const DocumentCollection = collection(db, 'Facturas');
-    const q = query(DocumentCollection, orderBy('fecha', 'desc'));
-    const snapshot = await getDocs(q);
+    const snapshot = await getDocs(DocumentCollection);
     
     if (snapshot.empty) {
       console.log('No documents found.');
@@ -34,7 +33,7 @@ export const getAllDocuments = async () => {
     return documents;
   } catch (error) {
     console.error('Error fetching documents:', error);
-    throw error; 
+    throw error;
   }
 };
 
