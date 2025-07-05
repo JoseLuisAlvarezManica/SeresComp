@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { loginUser } from '../services/auth';
 
-const LoginForm = ({ setIsAuthenticated }) => {
+const Login = ({ setIsAuthenticated }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
@@ -85,4 +85,4 @@ const LoginForm = ({ setIsAuthenticated }) => {
   );
 };
 
-export default LoginForm;
+export default Login;

@@ -5,7 +5,7 @@ import { auth } from './services/auth';
 
 import Scanner from './components/Scanner';
 import DocumentViewer from './components/DocumentViewer';
-import LoginForm from './components/Login';
+import Login from './components/Login';
 import NavBar from './components/NavBar';
 
 export default function App() {
@@ -42,7 +42,7 @@ export default function App() {
               isAuthenticated ? (
                 <Navigate to="/submit" />
               ) : (
-                <LoginForm setIsAuthenticated={setIsAuthenticated} />
+                <Login setIsAuthenticated={setIsAuthenticated} />
               )
             }
           />
