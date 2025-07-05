@@ -2,74 +2,42 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import LogoutButton from './LogoutButton';
 
-const NavBar = ({ isAdmin, isEmployee, setIsAuthenticated }) => {
+const NavBar = ({setIsAuthenticated }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
     <nav className="bg-gray-800 shadow">
       <div className="mx-auto max-w-7xl px-4">
         <div className="flex h-16 justify-between">
-          {/* Left side: Brand */}
           <div className="flex items-center">
-            <Link 
-              to="/" 
-              className="text-white font-bold text-xl hover:text-gray-200"
-            >
-              MyApp
-            </Link>
-            
-            {/* Desktop Menu (hidden on small screens) */}
-            <div className="ml-10 hidden md:flex items-center space-x-6">
-              <Link
-                to="/print"
-                className="text-gray-300 hover:text-white px-3 py-2 text-sm font-medium"
-              >
-                Print Form
-              </Link>
-              {(isAdmin || isEmployee) && (
                 <>
                   <Link
-                    to="/manage"
+                    to="/submit"
                     className="text-gray-300 hover:text-white px-3 py-2 text-sm font-medium"
                   >
-                    Printer Management
+                    Documentar
                   </Link>
                   <Link
-                    to="/users"
+                    to="/analyze"
                     className="text-gray-300 hover:text-white px-3 py-2 text-sm font-medium"
                   >
-                    User List
-                  </Link>
-                  <Link
-                    to="/prints"
-                    className="text-gray-300 hover:text-white px-3 py-2 text-sm font-medium"
-                  >
-                    Prints List
-                  </Link>
-                  <Link
-                    to="/failures"
-                    className="text-gray-300 hover:text-white px-3 py-2 text-sm font-medium"
-                  >
-                    Failures List
+                    Revisión
                   </Link>
                 </>
-              )}
             </div>
           </div>
 
-          {/* Right side: Logout (desktop) */}
           <div className="hidden md:flex items-center">
             <LogoutButton setIsAuthenticated={setIsAuthenticated} />
           </div>
 
-          {/* Mobile Menu Button */}
           <div className="flex md:hidden">
             <button
               type="button"
               className="text-gray-300 hover:text-white focus:outline-none"
               onClick={() => setIsOpen(!isOpen)}
             >
-              {/* Hamburger / X icon */}
+
               {!isOpen ? (
                 <svg className="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M4 5h16v2H4zM4 11h16v2H4zM4 17h16v2H4z" />
@@ -88,52 +56,25 @@ const NavBar = ({ isAdmin, isEmployee, setIsAuthenticated }) => {
             </button>
           </div>
         </div>
-      </div>
 
-      {/* Mobile Menu (only visible when "isOpen") */}
       {isOpen && (
         <div className="md:hidden bg-gray-700">
           <div className="px-2 pt-2 pb-3 space-y-1">
             <Link
-              to="/print"
+              to="/submit"
               onClick={() => setIsOpen(false)}
               className="block text-gray-300 hover:text-white px-3 py-2 rounded text-base font-medium"
             >
-              Print Form
+              Documentar
             </Link>
-            {(isAdmin || isEmployee) && (
-              <>
-                <Link
-                  to="/manage"
-                  onClick={() => setIsOpen(false)}
-                  className="block text-gray-300 hover:text-white px-3 py-2 rounded text-base font-medium"
-                >
-                  Printer Management
-                </Link>
-                <Link
-                  to="/users"
-                  onClick={() => setIsOpen(false)}
-                  className="block text-gray-300 hover:text-white px-3 py-2 rounded text-base font-medium"
-                >
-                  User List
-                </Link>
-                <Link
-                  to="/prints"
-                  onClick={() => setIsOpen(false)}
-                  className="block text-gray-300 hover:text-white px-3 py-2 rounded text-base font-medium"
-                >
-                  Prints List
-                </Link>
-                <Link
-                  to="/failures"
-                  onClick={() => setIsOpen(false)}
-                  className="block text-gray-300 hover:text-white px-3 py-2 rounded text-base font-medium"
-                >
-                  Failures List
-                </Link>
-              </>
-            )}
-            {/* Mobile Logout */}
+            <Link
+              to="/analyze"
+              onClick={() => setIsOpen(false)}
+              className="block text-gray-300 hover:text-white px-3 py-2 rounded text-base font-medium"
+            >
+              Revisión
+            </Link>
+
             <div className="border-t border-gray-600 pt-3">
               <LogoutButton setIsAuthenticated={setIsAuthenticated} />
             </div>
