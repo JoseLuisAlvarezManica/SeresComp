@@ -329,9 +329,7 @@ const DocumentViewer = () => {
                 className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="fecha">Document Date (fecha)</option>
-                <option value="Fecha">Document Date (Fecha)</option>
                 <option value="created_at">Created Date</option>
-                <option value="timestamp">Timestamp</option>
                 <option value="Folio fiscal">Folio</option>
                 <option value="Total">Total</option>
               </select>
@@ -375,9 +373,6 @@ const DocumentViewer = () => {
                       Total
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-                      Payment Method
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
                       Address
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
@@ -406,7 +401,7 @@ const DocumentViewer = () => {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center text-sm text-gray-900">
                             <Calendar className="w-4 h-4 text-gray-400 mr-2" />
-                            {formatDate(doc.fecha || doc.Fecha || doc.created_at || doc.timestamp)}
+                            {formatDate(doc.fecha || doc.created_at)}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -415,12 +410,7 @@ const DocumentViewer = () => {
                             <span className="font-medium">{formatCurrency(doc.Total)}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center text-sm text-gray-900">
-                            <Hash className="w-4 h-4 text-gray-400 mr-2" />
-                            <span className="truncate max-w-xs">{doc['Método de pago'] || 'N/A'}</span>
-                          </div>
-                        </td>
+
                         <td className="px-6 py-4">
                           <div className="text-sm text-gray-900 truncate max-w-xs">
                             {doc['Domicilio fiscal'] || 'N/A'}
