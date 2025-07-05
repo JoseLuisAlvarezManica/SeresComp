@@ -204,42 +204,59 @@ export const Scanner = () => {
 
   const renderTabladeCompra = () => {
     if (!editableData.TabladeCompra || !Array.isArray(editableData.TabladeCompra)) {
-      return null;
+        return null;
     }
 
     const tableData = editableData.TabladeCompra;
     const confidence = result.labels?.TabladeCompra?.confidence || 0;
     
     return (
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
             <h3 className="font-medium text-blue-900">
-              Tabla de Compra (Purchase Table)
+                Tabla de Compra (Purchase Table)
             </h3>
             {confidence > 0 && (
-              <span className={`text-xs ${confidence < 0.5 ? 'text-red-600' : 'text-gray-500'}`}>
+                <span className={`text-xs ${confidence < 0.5 ? 'text-red-600' : 'text-gray-500'}`}>
                 {(confidence * 100).toFixed(1)}%
-              </span>
+                </span>
             )}
-          </div>
-          
-          <div className="flex gap-2">
+            </div>
+            
+            <div className="flex gap-2">
             <button
-              onClick={addTableRow}
-              className="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors"
-              title="Add Row"
+                onClick={addTableRow}
+                className="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors"
+                title="Add Row"
             >
-              + Row
+                + Row
             </button>
             <button
-              onClick={addTableColumn}
-              className="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors"
-              title="Add Column"
+                onClick={addTableColumn}
+                className="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors"
+                title="Add Column"
             >
-              + Column
+                + Column
             </button>
-          </div>
+            </div>
+        </div>
+        
+        <div className="mb-2">
+            <div className="flex">
+            <div className="w-8 flex-shrink-0"></div> {/* Space for row number column */}
+            {tableData.length > 0 && tableData[0].map((_, colIndex) => (
+                <div key={colIndex} className="flex-1 flex justify-center">
+                <button
+                    onClick={() => removeTableColumn(colIndex)}
+                    className="w-5 h-5 bg-red-600 text-white rounded-full text-xs hover:bg-red-700 transition-colors"
+                    title="Delete Column"
+                >
+                    ×
+                </button>
+                </div>
+            ))}
+            </div>
         </div>
         
         <div className="pt-4">
@@ -248,39 +265,24 @@ export const Scanner = () => {
                 <tbody>
                 {tableData.map((row, rowIndex) => (
                     <tr key={rowIndex} className={`border-b border-gray-300 ${rowIndex === 0 ? 'bg-gray-100' : 'bg-white'}`}>
-                    {rowIndex > 0 && (
-                        <td className="border-r border-gray-300 last:border-r-0 p-0 relative min-w-[120px]">
-                        <button
+                    <td className="border-r border-gray-300 p-1 w-8 bg-gray-100">
+                        <div className="w-full h-full flex items-center justify-center">
+                        {rowIndex === 0 ? (
+                            <span className="text-gray-400 text-xs">#</span>
+                        ) : (
+                            <button
                             onClick={() => removeTableRow(rowIndex)}
-                            className="w-full h-full text-red-600 hover:bg-red-100 rounded text-xs"
+                            className="w-4 h-4 bg-red-600 text-white rounded-full text-xs hover:bg-red-700 transition-colors"
                             title="Delete Row"
-                        >
+                            >
                             ×
-                        </button>
-                        </td>
-                    )}
-                    {rowIndex === 0 && (
-                        <td className="border-r border-gray-300 p-1 w-8 bg-gray-100">
-                        <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
-                            #
+                            </button>
+                        )}
                         </div>
-                        </td>
-                    )}
+                    </td>
                     
                     {row.map((cell, colIndex) => (
                         <td key={colIndex} className="border-r border-gray-300 last:border-r-0 p-1 relative">
-                        {rowIndex === 0 && (
-                            <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 z-10">
-                            <button
-                                onClick={() => removeTableColumn(colIndex)}
-                                className="w-5 h-5 bg-red-600 text-white rounded-full text-xs hover:bg-red-700 transition-colors"
-                                title="Delete Column"
-                            >
-                                ×
-                            </button>
-                            </div>
-                        )}
-                        
                         {rowIndex === 0 ? (
                             <input
                             type="text"
@@ -305,9 +307,9 @@ export const Scanner = () => {
             </table>
             </div>
         </div>
-      </div>
+        </div>
     );
-  };
+    };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 p-6">
