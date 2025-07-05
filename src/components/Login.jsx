@@ -24,13 +24,13 @@ const Login = ({ setIsAuthenticated }) => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#181818] text-white">
+    <div className="min-h-screen flex flex-col bg-[#f7f8fa] text-black">
       <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 flex-1">
-        <div className="max-w-md w-full space-y-8 p-8 bg-[#232323] rounded-2xl shadow-lg border border-[#232323]">
+        <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-2xl shadow-lg border border-[#ececec]">
           <div>
             <h2
               className="mt-6 text-center text-3xl font-extrabold tracking-tight"
-              style={{ color: "#f4f4f5", letterSpacing: '1px' }} // Gris muy claro/blanco para título
+              style={{ color: "#222", letterSpacing: '1px' }}
             >
               Iniciar Sesión
             </h2>
@@ -38,7 +38,7 @@ const Login = ({ setIsAuthenticated }) => {
           <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
             {error && (
               <div
-                className="bg-[#ff4d4f22] border border-[#ff4d4f] text-[#ffbdbd] px-4 py-3 rounded relative"
+                className="bg-[#ff4d4f22] border border-[#ff4d4f] text-[#d7263d] px-4 py-3 rounded relative"
                 role="alert"
               >
                 <strong className="font-bold">¡Error!</strong>
@@ -51,9 +51,9 @@ const Login = ({ setIsAuthenticated }) => {
                 <input
                   type="email"
                   required
-                  className="appearance-none block w-full px-3 py-2 border border-[#3a3a3a]
-                             bg-[#181818] text-white rounded-md focus:outline-none focus:ring-2
-                             focus:ring-[#c5c5c7] focus:border-[#c5c5c7] sm:text-sm transition placeholder:text-[#c5c5c7]"
+                  className="appearance-none block w-full px-3 py-2 border border-[#d3d3d3]
+                             bg-[#f8fafc] text-black rounded-md focus:outline-none focus:ring-2
+                             focus:ring-[#8db3fa] focus:border-[#8db3fa] sm:text-sm transition placeholder:text-[#8a8a8a]"
                   placeholder="Correo Electrónico"
                   onChange={(e) => setEmail(e.target.value)}
                   style={{ fontWeight: 500 }}
@@ -63,9 +63,9 @@ const Login = ({ setIsAuthenticated }) => {
                 <input
                   type="password"
                   required
-                  className="appearance-none block w-full px-3 py-2 border border-[#3a3a3a]
-                             bg-[#181818] text-white rounded-md focus:outline-none focus:ring-2
-                             focus:ring-[#c5c5c7] focus:border-[#c5c5c7] sm:text-sm transition placeholder:text-[#c5c5c7]"
+                  className="appearance-none block w-full px-3 py-2 border border-[#d3d3d3]
+                             bg-[#f8fafc] text-black rounded-md focus:outline-none focus:ring-2
+                             focus:ring-[#8db3fa] focus:border-[#8db3fa] sm:text-sm transition placeholder:text-[#8a8a8a]"
                   placeholder="Contraseña"
                   onChange={(e) => setPassword(e.target.value)}
                   style={{ fontWeight: 500 }}
@@ -76,8 +76,8 @@ const Login = ({ setIsAuthenticated }) => {
             <div>
               <Button
                 type="submit"
-                className="w-full py-2 px-4 rounded-md font-semibold bg-[#c5c5c7] text-[#181818] 
-                           hover:bg-[#a5a5a7] focus:outline-none focus:ring-2 focus:ring-[#c5c5c7]
+                className="w-full py-2 px-4 rounded-md font-semibold bg-[#8db3fa] text-white 
+                           hover:bg-[#6a9bf7] focus:outline-none focus:ring-2 focus:ring-[#8db3fa]
                            transition"
                 style={{ fontWeight: 600 }}
               >
