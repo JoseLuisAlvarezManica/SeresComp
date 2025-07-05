@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { loginUser } from '../services/auth';
-import '@fontsource/inter/400.css';
 
 const Login = ({ setIsAuthenticated }) => {
   const [email, setEmail] = useState('');
@@ -35,7 +34,7 @@ const Login = ({ setIsAuthenticated }) => {
           <div>
             <h2
               className="mt-6 text-center text-3xl font-extrabold tracking-tight"
-              style={{ color: "#222", letterSpacing: '1px', fontFamily: 'Inter, ui-sans-serif, system-ui' }}
+              style={{ color: "#222", letterSpacing: '1px' }}
             >
               Iniciar Sesión
             </h2>
