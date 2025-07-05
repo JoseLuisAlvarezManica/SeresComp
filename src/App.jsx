@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
-import Scanner from './components/Scanner';
-import DocumentViewer from './components/DocumentViewer';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from './services/auth';
 
+import Scanner from './components/Scanner';
+import DocumentViewer from './components/DocumentViewer';
+import LoginForm from './components/Login';
+import NavBar from './components/NavBar';
 
 export default function App() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
