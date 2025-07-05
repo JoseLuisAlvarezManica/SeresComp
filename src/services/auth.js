@@ -59,17 +59,14 @@ export const registerUser = async (email, password, name) => {
   }
 };
 
-export async function loginUser(email, password) {
+export const loginUser = async (email, password) => {
   try {
-    const auth = getAuth();
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    const user = userCredential.user;
-
-    return { user, error: null };
+    return { user: userCredential.user, error: null };
   } catch (error) {
-    return { user: null, error: error.message };
+    return { user: null, error };
   }
-}
+};
 
 export const logoutUser = async () => {
   try {
