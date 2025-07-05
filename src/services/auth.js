@@ -11,11 +11,7 @@ import { db } from './firebaseConfig';
 import {
   doc,
   setDoc,
-  getDoc,
   serverTimestamp,
-  collection,
-  getDocs,
-  updateDoc
 } from 'firebase/firestore';
 
 export const auth = getAuth();
@@ -42,23 +38,6 @@ export const initAuth = (onUserChangedCallback) => {
     });
 };
 
-export const getUserData = async () => {
-  const user = auth.currentUser;
-  if (!user) {
-    console.error('No user is currently authenticated.');
-    return null;
-  }
-
-  const userDoc = doc(db, 'Users', user.uid);
-  const docSnapshot = await getDoc(userDoc);
-
-  if (docSnapshot.exists()) {
-    return docSnapshot.data();
-  } else {
-    console.error('No user data found in Firestore for uid:', user.uid);
-    return null;
-  }
-};
 
 export const registerUser = async (email, password, name) => {
   try {
@@ -86,17 +65,9 @@ export async function loginUser(email, password) {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
 
-    const userDocRef = doc(db, 'users', user.uid);
-    const userDocSnap = await getDoc(userDocRef);
-
-    if (!userDocSnap.exists()) {
-      return { user: null, userData: null, error: 'Si la información es correcta contacte a un administrador (pendiente/banned).' };
-    }
-
-    const userData = userDocSnap.data();
-    return { user, userData, error: null };
+    return { user, error: null };
   } catch (error) {
-    return { user: null, userData: null, error: error.message };
+    return { user: null, error: error.message };
   }
 }
 
@@ -111,38 +82,3 @@ export const logoutUser = async () => {
   }
 };
 
-export const getAllUsers = async () => {
-  try {
-    const usersCollectionRef = collection(db, 'Users');
-    const snapshot = await getDocs(usersCollectionRef);
-
-    const pendingUsers = [];
-    const otherUsers = [];
-
-    snapshot.forEach((docSnap) => {
-      const userData = docSnap.data();
-      if (userData.role === 'pending') {
-        pendingUsers.push({ id: docSnap.id, ...userData });
-      } else {
-        otherUsers.push({ id: docSnap.id, ...userData });
-      }
-    });
-
-    return { pendingUsers, otherUsers };
-  } catch (error) {
-    console.error('Error fetching all users:', error);
-    return { pendingUsers: [], otherUsers: [] };
-  }
-};
-
-export const updateUserRole = async (userId, newRole) => {
-  try {
-    const userRef = doc(db, 'Users', userId);
-    await updateDoc(userRef, { role: newRole });
-    console.log(`User role updated to "${newRole}" for user with ID: ${userId}`);
-    return { success: true, error: null };
-  } catch (error) {
-    console.error('Error updating user role:', error);
-    return { success: false, error: error.message };
-  }
-};
