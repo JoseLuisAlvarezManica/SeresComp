@@ -64,18 +64,13 @@ export const getDocumentByFolio = async (folio) => {
 export const createDocument = async (documentData) => {
   try {
     console.log('Creating a new document:', documentData);
-    
-    // Convert nested arrays to a format Firestore can handle
     const processedData = { ...documentData };
     
-    // Handle TabladeCompra nested array - Option 1: Convert to JSON string
     if (processedData.TabladeCompra && Array.isArray(processedData.TabladeCompra)) {
-      // Store as JSON string to preserve exact structure
       processedData.TabladeCompra_json = JSON.stringify(processedData.TabladeCompra);
-      delete processedData.TabladeCompra; // Remove the nested array
+      delete processedData.TabladeCompra;
     }
     
-    // Add timestamp to the document
     const dataWithTimestamp = {
       ...processedData,
       created_at: serverTimestamp()
@@ -102,7 +97,6 @@ export const updateDocument = async (folio, updatedData) => {
       return;
     }
 
-    // Handle nested arrays in update data too
     const processedData = { ...updatedData };
     if (processedData.TabladeCompra && Array.isArray(processedData.TabladeCompra)) {
       processedData.TabladeCompra_json = JSON.stringify(processedData.TabladeCompra);

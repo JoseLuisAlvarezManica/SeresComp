@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Eye, Trash2, Edit, FileText, Calendar, DollarSign, Hash, ShoppingCart } from 'lucide-react';
-import { getAllDocuments } from '@/services/documentManager';
+import { getAllDocuments, deleteDocument } from '@/services/documentManager';
 
 const DocumentViewer = () => {
   const [documents, setDocuments] = useState([]);
@@ -11,6 +11,7 @@ const DocumentViewer = () => {
   const [sortBy, setSortBy] = useState('fecha');
   const [sortOrder, setSortOrder] = useState('desc');
   const [selectedDocument, setSelectedDocument] = useState(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState(null);
 
   useEffect(() => {
     loadDocuments();
@@ -36,6 +37,21 @@ const DocumentViewer = () => {
       setError('Failed to load documents');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteDocument = async (documentId, folio) => {
+    try {
+      setError(null);
+      await deleteDocument(documentId);
+      
+      setDocuments(prev => prev.filter(doc => doc.id !== documentId));
+      setDeleteConfirmation(null);
+      
+      console.log(`Document ${folio} deleted successfully`);
+    } catch (err) {
+      console.error('Error deleting document:', err);
+      setError('Failed to delete document');
     }
   };
 
@@ -107,7 +123,6 @@ const DocumentViewer = () => {
     return isNaN(num) ? amount : `$${num.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
   };
 
-  // Parse TabladeCompra JSON data
   const parseTabladeCompra = (document) => {
     if (document.TabladeCompra_json) {
       try {
@@ -120,7 +135,56 @@ const DocumentViewer = () => {
     return [];
   };
 
-  // Component to display TabladeCompra as a table
+  const DeleteConfirmationModal = ({ document, onConfirm, onCancel }) => {
+    if (!document) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-lg p-6 max-w-md w-full">
+          <div className="flex items-center mb-4">
+            <Trash2 className="w-6 h-6 text-red-600 mr-3" />
+            <h2 className="text-xl font-bold text-gray-900">Delete Document</h2>
+          </div>
+          
+          <div className="mb-6">
+            <p className="text-gray-700 mb-2">
+              Are you sure you want to delete this document?
+            </p>
+            <div className="bg-gray-50 p-3 rounded-lg">
+              <p className="text-sm text-gray-600">
+                <span className="font-medium">Folio:</span> {document['Folio fiscal'] || 'Unknown'}
+              </p>
+              <p className="text-sm text-gray-600">
+                <span className="font-medium">Date:</span> {formatDate(document.fecha || document.created_at)}
+              </p>
+              <p className="text-sm text-gray-600">
+                <span className="font-medium">Total:</span> {formatCurrency(document.Total)}
+              </p>
+            </div>
+            <p className="text-red-600 text-sm mt-2">
+              This action cannot be undone.
+            </p>
+          </div>
+          
+          <div className="flex justify-end space-x-3">
+            <button
+              onClick={onCancel}
+              className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => onConfirm(document.id, document['Folio fiscal'])}
+              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const TabladeCompraTable = ({ document }) => {
     const tableData = parseTabladeCompra(document);
     
@@ -248,12 +312,10 @@ const DocumentViewer = () => {
           </div>
           
           <div className="space-y-4">
-            {/* Display TabladeCompra first if it exists */}
             {document.TabladeCompra_json && (
               <TabladeCompraTable document={document} />
             )}
             
-            {/* Display other document fields */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {Object.entries(document).map(([key, value]) => {
                 if (key === 'id' || key === 'TabladeCompra_json') return null;
@@ -432,14 +494,7 @@ const DocumentViewer = () => {
                               <Eye className="w-4 h-4" />
                             </button>
                             <button
-                              onClick={() => console.log('Edit:', doc.id)}
-                              className="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-50"
-                              title="Edit"
-                            >
-                              <Edit className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => console.log('Delete:', doc.id)}
+                              onClick={() => setDeleteConfirmation(doc)}
                               className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50"
                               title="Delete"
                             >
@@ -461,6 +516,14 @@ const DocumentViewer = () => {
         <DocumentDetailModal
           document={selectedDocument}
           onClose={() => setSelectedDocument(null)}
+        />
+      )}
+
+      {deleteConfirmation && (
+        <DeleteConfirmationModal
+          document={deleteConfirmation}
+          onConfirm={handleDeleteDocument}
+          onCancel={() => setDeleteConfirmation(null)}
         />
       )}
     </div>
