@@ -1,6 +1,8 @@
 import React from 'react';
 import { useState } from 'react';
 import {createDocument} from '../services/documentManager';
+import { Button } from '@/components/ui/button';
+import { X, Plus } from 'lucide-react';
 
 export const Scanner = () => {
   const [file, setFile] = useState(null);
@@ -225,35 +227,42 @@ export const Scanner = () => {
             </div>
             
             <div className="flex gap-2">
-            <button
+            <Button
                 onClick={addTableRow}
-                className="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors"
+                size="sm"
+                className="text-xs"
                 title="Add Row"
             >
-                + Row
-            </button>
-            <button
+                <Plus className="w-3 h-3 mr-1" />
+                Row
+            </Button>
+            <Button
                 onClick={addTableColumn}
-                className="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors"
+                size="sm"
+                className="text-xs"
                 title="Add Column"
             >
-                + Column
-            </button>
+                <Plus className="w-3 h-3 mr-1" />
+                Column
+            </Button>
             </div>
         </div>
         
+        {/* Column delete buttons row */}
         <div className="mb-2">
             <div className="flex">
             <div className="w-8 flex-shrink-0"></div> {/* Space for row number column */}
             {tableData.length > 0 && tableData[0].map((_, colIndex) => (
                 <div key={colIndex} className="flex-1 flex justify-center">
-                <button
+                <Button
                     onClick={() => removeTableColumn(colIndex)}
-                    className="w-5 h-5 bg-red-600 text-white rounded-full text-xs hover:bg-red-700 transition-colors"
+                    variant="destructive"
+                    size="sm"
+                    className="w-6 h-6 p-0 rounded-full"
                     title="Delete Column"
                 >
-                    ×
-                </button>
+                    <X className="w-3 h-3" />
+                </Button>
                 </div>
             ))}
             </div>
@@ -270,13 +279,15 @@ export const Scanner = () => {
                         {rowIndex === 0 ? (
                             <span className="text-gray-400 text-xs">#</span>
                         ) : (
-                            <button
+                            <Button
                             onClick={() => removeTableRow(rowIndex)}
-                            className="w-4 h-4 bg-red-600 text-white rounded-full text-xs hover:bg-red-700 transition-colors"
+                            variant="destructive"
+                            size="sm"
+                            className="w-5 h-5 p-0 rounded-full"
                             title="Delete Row"
                             >
-                            ×
-                            </button>
+                            <X className="w-3 h-3" />
+                            </Button>
                         )}
                         </div>
                     </td>
