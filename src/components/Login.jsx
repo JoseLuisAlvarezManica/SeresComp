@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Button } from "@/components/ui/button"; // <-- ShadCN button
 import { loginUser } from '../services/auth';
 
 const Login = ({ setIsAuthenticated }) => {
@@ -13,7 +14,7 @@ const Login = ({ setIsAuthenticated }) => {
     const { user, error } = await loginUser(email, password);
 
     if (user) {
-        setIsAuthenticated(true);
+      setIsAuthenticated(true);
     } else {
       if (error) {
         setError("Usuario o contraseña incorrecta.");
@@ -23,19 +24,19 @@ const Login = ({ setIsAuthenticated }) => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-900 text-white">
+    <div className="min-h-screen flex flex-col bg-[#181818] text-white">
       <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 flex-1">
-        <div className="max-w-md w-full space-y-8 p-8 bg-gray-800 rounded-lg shadow-lg">
+        <div className="max-w-md w-full space-y-8 p-8 bg-[#222222] rounded-2xl shadow-lg border border-[#222a28]">
           <div>
-            <h2 className="mt-6 text-center text-3xl font-bold">
+            <h2 className="mt-6 text-center text-3xl font-extrabold tracking-tight"
+              style={{ color: '#22e584', letterSpacing: '1px' }}>
               Iniciar Sesión
             </h2>
           </div>
-
           <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
             {error && (
               <div
-                className="bg-red-600/20 border border-red-600 text-red-300 px-4 py-3 rounded relative"
+                className="bg-[#ff4d4f22] border border-[#ff4d4f] text-[#ffbdbd] px-4 py-3 rounded relative"
                 role="alert"
               >
                 <strong className="font-bold">¡Error!</strong>
@@ -48,9 +49,9 @@ const Login = ({ setIsAuthenticated }) => {
                 <input
                   type="email"
                   required
-                  className="appearance-none block w-full px-3 py-2 border border-gray-700
-                             bg-gray-900 text-white rounded-md focus:outline-none focus:ring-blue-500
-                             focus:border-blue-500 sm:text-sm"
+                  className="appearance-none block w-full px-3 py-2 border border-[#343434]
+                             bg-[#181818] text-white rounded-md focus:outline-none focus:ring-2
+                             focus:ring-[#22e584] focus:border-[#22e584] sm:text-sm transition"
                   placeholder="Correo Electrónico"
                   onChange={(e) => setEmail(e.target.value)}
                 />
@@ -59,9 +60,9 @@ const Login = ({ setIsAuthenticated }) => {
                 <input
                   type="password"
                   required
-                  className="appearance-none block w-full px-3 py-2 border border-gray-700
-                             bg-gray-900 text-white rounded-md focus:outline-none focus:ring-blue-500
-                             focus:border-blue-500 sm:text-sm"
+                  className="appearance-none block w-full px-3 py-2 border border-[#343434]
+                             bg-[#181818] text-white rounded-md focus:outline-none focus:ring-2
+                             focus:ring-[#22e584] focus:border-[#22e584] sm:text-sm transition"
                   placeholder="Contraseña"
                   onChange={(e) => setPassword(e.target.value)}
                 />
@@ -69,14 +70,14 @@ const Login = ({ setIsAuthenticated }) => {
             </div>
 
             <div>
-              <button
+              <Button
                 type="submit"
-                className="group relative w-full flex justify-center py-2 px-4 border border-transparent
-                           text-sm font-medium rounded-md bg-blue-600 hover:bg-blue-700 focus:outline-none
-                           focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="w-full py-2 px-4 rounded-md font-semibold bg-[#22e584] text-black 
+                           hover:bg-[#1edb7e] focus:outline-none focus:ring-2 focus:ring-[#22e584]
+                           transition"
               >
                 Iniciar Sesión
-              </button>
+              </Button>
             </div>
           </form>
         </div>
