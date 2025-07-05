@@ -155,7 +155,7 @@ const DocumentViewer = () => {
                 <span className="font-medium">Folio:</span> {document['Folio fiscal']}
               </p>
               <p className="text-sm text-gray-600">
-                <span className="font-medium">Date:</span> {formatDate(document.fecha)}
+                <span className="font-medium">Fecha:</span> {formatDate(document.Fecha)}
               </p>
               <p className="text-sm text-gray-600">
                 <span className="font-medium">Total:</span> {formatCurrency(document.Total)}
@@ -390,8 +390,8 @@ const DocumentViewer = () => {
                 onChange={(e) => setSortBy(e.target.value)}
                 className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="fecha">Document Date (fecha)</option>
-                <option value="created_at">Created Date</option>
+                <option value="Fecha">Fecha de emision</option>
+                <option value="created_at">Fecha de creado</option>
                 <option value="Folio fiscal">Folio</option>
                 <option value="Total">Total</option>
               </select>
@@ -456,14 +456,14 @@ const DocumentViewer = () => {
                           <div className="flex items-center">
                             <FileText className="w-4 h-4 text-blue-600 mr-2" />
                             <span className="text-sm font-medium text-gray-900">
-                              {doc['Folio fiscal'] || 'Unknown Folio'}
+                              {doc['Folio fiscal']}
                             </span>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center text-sm text-gray-900">
                             <Calendar className="w-4 h-4 text-gray-400 mr-2" />
-                            {formatDate(doc.fecha || doc.created_at)}
+                            {formatDate(doc.Fecha)}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -475,7 +475,7 @@ const DocumentViewer = () => {
 
                         <td className="px-6 py-4">
                           <div className="text-sm text-gray-900 truncate max-w-xs">
-                            {doc['Domicilio fiscal'] || 'N/A'}
+                            {doc['Domicilio fiscal']}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
