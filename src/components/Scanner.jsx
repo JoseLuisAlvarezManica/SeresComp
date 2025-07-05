@@ -195,7 +195,7 @@ export const Scanner = () => {
           type="text"
           value={editableData[fieldName] || ''}
           onChange={(e) => handleFieldChange(fieldName, e.target.value)}
-          className={`w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${textColor}`}
+          className={`w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${textColor}`}
           placeholder={`Enter ${fieldName}`}
         />
       </div>
@@ -249,7 +249,7 @@ export const Scanner = () => {
                 {tableData.map((row, rowIndex) => (
                     <tr key={rowIndex} className={`border-b border-gray-300 ${rowIndex === 0 ? 'bg-gray-100' : 'bg-white'}`}>
                     {rowIndex > 0 && (
-                        <td className="border-r border-gray-300 p-1 w-8 bg-red-50">
+                        <td className="border-r border-gray-300 last:border-r-0 p-0 relative min-w-[120px]">
                         <button
                             onClick={() => removeTableRow(rowIndex)}
                             className="w-full h-full text-red-600 hover:bg-red-100 rounded text-xs"
