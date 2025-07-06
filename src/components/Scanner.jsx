@@ -331,17 +331,17 @@ export const Scanner = () => {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Subir Documento
             </label>
-            {file && (
-              <p className="text-sm text-gray-600 mt-2">
-                Seleccionado: {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
-              </p>
-            )}
             <input
               type="file"
               accept="image/*,application/pdf"
               onChange={handleFileChange}
               className="w-full border border-gray-300 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+            {file && (
+              <p className="text-sm text-gray-600 mt-2">
+                Seleccionado: {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
+              </p>
+            )}
   
           </div>
           

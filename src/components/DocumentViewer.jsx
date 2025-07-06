@@ -143,12 +143,12 @@ const DocumentViewer = () => {
         <div className="bg-white rounded-lg p-6 max-w-md w-full">
           <div className="flex items-center mb-4">
             <Trash2 className="w-6 h-6 text-red-600 mr-3" />
-            <h2 className="text-xl font-bold text-gray-900">Delete Document</h2>
+            <h2 className="text-xl font-bold text-gray-900">Borrar documento</h2>
           </div>
           
           <div className="mb-6">
             <p className="text-gray-700 mb-2">
-              Are you sure you want to delete this document?
+              ¿Está seguro de que quiere borrar este documento?
             </p>
             <div className="bg-gray-50 p-3 rounded-lg">
               <p className="text-sm text-gray-600">
@@ -162,7 +162,7 @@ const DocumentViewer = () => {
               </p>
             </div>
             <p className="text-red-600 text-sm mt-2">
-              This action cannot be undone.
+              Esta acción no se puede deshacer.
             </p>
           </div>
           
@@ -171,13 +171,13 @@ const DocumentViewer = () => {
               onClick={onCancel}
               className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
             >
-              Cancel
+              Cancelar
             </button>
             <button
               onClick={() => onConfirm(document.id, document['Folio fiscal'])}
               className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
             >
-              Delete
+              Borrar
             </button>
           </div>
         </div>
@@ -355,7 +355,7 @@ const DocumentViewer = () => {
       <div className="max-w-7xl mx-auto">
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-            <h1 className="text-2xl font-bold text-gray-900">Document Library</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Revisión de documentos</h1>
             <button
               onClick={loadDocuments}
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
