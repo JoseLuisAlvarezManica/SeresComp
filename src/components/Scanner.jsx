@@ -416,10 +416,10 @@ export const Scanner = () => {
                   const dataStr = JSON.stringify(editableData, null, 2);
                   const data = JSON.parse(dataStr);
                   await createDocument(data);
-                  alert("Data uploaded successfully!");
+                  alert("¡Documento subido con éxito!");
                 }catch (error) {
                     console.error("Error uploading data: ", error);
-                    alert("Error uploading data.");        
+                    alert("Error al subir el documento.");        
                 }}}
                 className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
               >
