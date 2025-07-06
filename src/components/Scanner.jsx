@@ -234,7 +234,7 @@ export const Scanner = () => {
                 title="Add Row"
             >
                 <Plus className="w-3 h-3 mr-1" />
-                Row
+                Fila
             </Button>
             <Button
                 onClick={addTableColumn}
@@ -243,7 +243,7 @@ export const Scanner = () => {
                 title="Add Column"
             >
                 <Plus className="w-3 h-3 mr-1" />
-                Column
+                Columna
             </Button>
             </div>
         </div>
@@ -324,24 +324,25 @@ export const Scanner = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 p-6">
       <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-4xl">
-        <h1 className="text-2xl font-bold mb-6 text-center">Document Analysis</h1>
+        <h1 className="text-2xl font-bold mb-6 text-center">Análisis de documentos</h1>
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Upload Document
+              Subir Documento
             </label>
+            {file && (
+              <p className="text-sm text-gray-600 mt-2">
+                Seleccionado: {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
+              </p>
+            )}
             <input
               type="file"
               accept="image/*,application/pdf"
               onChange={handleFileChange}
               className="w-full border border-gray-300 p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-            {file && (
-              <p className="text-sm text-gray-600 mt-2">
-                Selected: {file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
-              </p>
-            )}
+  
           </div>
           
           <button
@@ -349,7 +350,7 @@ export const Scanner = () => {
             disabled={!file || loading}
             className="w-full bg-blue-600 text-white px-4 py-3 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {loading ? 'Analyzing Document...' : 'Analyze Document'}
+            {loading ? 'Analizando documento...' : 'Analizar documento'}
           </button>
         </form>
 
@@ -363,10 +364,10 @@ export const Scanner = () => {
         {result && (
           <div className="mt-6 space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Document Analysis</h2>
+              <h2 className="text-lg font-semibold">Resultado</h2>
               {result.confidence && (
                 <span className="text-sm text-gray-600">
-                  Overall Confidence: {(result.confidence * 100).toFixed(1)}%
+                  Confianza general: {(result.confidence * 100).toFixed(1)}%
                 </span>
               )}
             </div>

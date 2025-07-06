@@ -262,15 +262,14 @@ const DocumentViewer = () => {
           </table>
         </div>
 
-        {/* Summary for TabladeCompra */}
         <div className="mt-3 p-3 bg-gray-50 rounded-lg">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
             <div>
-              <span className="font-medium text-gray-600">Total Items:</span>
+              <span className="font-medium text-gray-600">Objetos totales:</span>
               <span className="ml-2 text-gray-900">{rows.length}</span>
             </div>
             <div>
-              <span className="font-medium text-gray-600">Total Quantity:</span>
+              <span className="font-medium text-gray-600">Cantidad total:</span>
               <span className="ml-2 text-gray-900">
                 {rows.reduce((sum, row) => {
                   const qty = parseInt(row[0]?.replace(/,/g, '') || 0);
@@ -279,7 +278,7 @@ const DocumentViewer = () => {
               </span>
             </div>
             <div>
-              <span className="font-medium text-gray-600">Total Amount:</span>
+              <span className="font-medium text-gray-600">Importes totales:</span>
               <span className="ml-2 text-gray-900 font-medium">
                 {formatTableCurrency(
                   rows.reduce((sum, row) => {
@@ -302,7 +301,7 @@ const DocumentViewer = () => {
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
         <div className="bg-white rounded-lg p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold text-gray-900">Document Details</h2>
+            <h2 className="text-xl font-bold text-gray-900">Detalles del documento</h2>
             <button
               onClick={onClose}
               className="text-gray-500 hover:text-gray-700 text-xl font-bold"
@@ -361,7 +360,7 @@ const DocumentViewer = () => {
               onClick={loadDocuments}
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
             >
-              Refresh
+              Actualizar página
             </button>
           </div>
 
@@ -371,13 +370,12 @@ const DocumentViewer = () => {
             </div>
           )}
 
-          {/* Search and Filter Controls */}
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
                 type="text"
-                placeholder="Search documents..."
+                placeholder="Buscar Documentos..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -401,15 +399,15 @@ const DocumentViewer = () => {
                 onChange={(e) => setSortOrder(e.target.value)}
                 className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="desc">Descending</option>
-                <option value="asc">Ascending</option>
+                <option value="desc">Descendientes</option>
+                <option value="asc">Ascendientes</option>
               </select>
             </div>
           </div>
 
           <div className="mb-4">
             <p className="text-sm text-gray-600">
-              Showing {filteredDocuments.length} of {documents.length} documents
+              Mostrando {filteredDocuments.length} de {documents.length} documentos
             </p>
           </div>
 
@@ -417,7 +415,7 @@ const DocumentViewer = () => {
             <div className="text-center py-12">
               <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
               <p className="text-gray-500">
-                {searchTerm ? 'No documents found matching your search.' : 'No documents available.'}
+                {searchTerm ? 'No hay documentos con esos parametros.' : 'Documentos no disponibles.'}
               </p>
             </div>
           ) : (
@@ -429,19 +427,19 @@ const DocumentViewer = () => {
                       Folio Fiscal
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-                      Date
+                      Fecha
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
                       Total
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-                      Address
+                      Dirección
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-                      Items
+                      Objetos
                     </th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider border-b">
-                      Actions
+                      Acciones
                     </th>
                   </tr>
                 </thead>
